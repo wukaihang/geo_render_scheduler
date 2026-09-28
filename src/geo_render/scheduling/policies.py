@@ -173,6 +173,13 @@ class EFTPolicy:
             costs=costs,
         )
 
+    def observe_completed(
+        self, gpu_id: str, model_id: str, duration_ms: float
+    ) -> None:
+        observer = getattr(self.predictor, "observe", None)
+        if callable(observer):
+            observer(gpu_id, model_id, duration_ms)
+
 
 _ORACLE_TOKEN = object()
 

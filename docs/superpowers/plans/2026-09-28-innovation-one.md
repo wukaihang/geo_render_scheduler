@@ -282,7 +282,7 @@ git commit -m "feat: implement EFT and baseline schedulers"
 - Produces: `generate_synthetic_trace(config)`, `read_trace_csv`, `write_trace_csv`, and `ReplayEngine.run(trace, policy)`.
 - Produces: immutable completed-request and decision-event records.
 
-- [ ] **Step 1: Write failing determinism, fairness, and future-isolation tests**
+- [x] **Step 1: Write failing determinism, fairness, and future-isolation tests**
 
 ```python
 def test_trace_is_identical_for_same_seed(config):
@@ -297,23 +297,23 @@ def test_online_policy_never_receives_trace_record(trace, spying_policy):
     assert spying_policy.observed_types == {RenderRequest}
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python3 -m pytest tests/unit/test_trace.py tests/integration/test_replay.py -q`
 
 Expected: imports fail because workload modules are missing.
 
-- [ ] **Step 3: Implement seeded Poisson generation and event replay**
+- [x] **Step 3: Implement seeded Poisson generation and event replay**
 
 Use `random.Random(seed).expovariate(arrival_rate_per_ms)`. Heap events are ordered by `(time_ms, completion_before_arrival, sequence)`. On completion, update only the selected online predictor/history observer, then start that GPU's queue head. `source="synthetic"` is mandatory on generated traces and replay metadata.
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run: `python3 -m pytest tests/unit/test_trace.py tests/integration/test_replay.py -q`
 
 Expected: all Task 5 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/geo_render/workload tests/unit/test_trace.py tests/integration/test_replay.py
