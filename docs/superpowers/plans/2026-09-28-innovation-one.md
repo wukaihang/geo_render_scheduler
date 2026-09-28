@@ -40,7 +40,7 @@
 - Produces: `Renderer.render(request, gpu_id) -> RenderResult` and `DeviceStateProvider.snapshot() -> tuple[DeviceState, ...]` protocols.
 - Produces: `HardwareBackendUnavailable` and unavailable backends that always raise it with actionable platform requirements.
 
-- [ ] **Step 1: Write failing validation and hardware-boundary tests**
+- [x] **Step 1: Write failing validation and hardware-boundary tests**
 
 ```python
 def test_request_rejects_non_positive_dimensions(sample_request):
@@ -52,13 +52,13 @@ def test_unavailable_renderer_never_fabricates_measurements(sample_request):
         UnavailableRenderer().render(sample_request, "gpu-0")
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python3 -m pytest tests/unit/test_types.py tests/unit/test_hardware_boundary.py -q`
 
 Expected: collection fails because `geo_render` does not exist.
 
-- [ ] **Step 3: Add packaging, validated dataclasses, protocols, and unavailable backends**
+- [x] **Step 3: Add packaging, validated dataclasses, protocols, and unavailable backends**
 
 Use frozen dataclasses with `__post_init__` validation. `TraceRecord.actual_render_ms_by_gpu` is immutable and is not part of `RenderRequest`, preventing online policies from observing oracle values through the request API.
 
@@ -74,13 +74,13 @@ class UnavailableRenderer:
         )
 ```
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run: `python3 -m pytest tests/unit/test_types.py tests/unit/test_hardware_boundary.py -q`
 
 Expected: all Task 1 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pyproject.toml README.md src/geo_render/common src/geo_render/rendering tests/unit/test_types.py tests/unit/test_hardware_boundary.py

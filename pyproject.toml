@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geo-render-scheduler"
+version = "0.1.0"
+description = "Content-aware duration prediction and EFT scheduling for multi-GPU geological volume rendering"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "joblib>=1.2",
+  "numpy>=1.23,<3",
+  "scikit-learn>=1.2,<2",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[project.scripts]
+geo-render = "geo_render.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
