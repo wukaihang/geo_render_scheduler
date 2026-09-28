@@ -231,7 +231,7 @@ git commit -m "feat: add duration prediction models"
 - Produces: `SchedulerContext`, `SchedulerPolicy`, `WorkerState`, `ClusterState`.
 - Produces: `RoundRobinPolicy`, `LeastQueuePolicy`, `StaticWeightedPolicy`, `EFTPolicy` configured as EWMA or Feature, and `OracleEFTPolicy.for_offline_replay(...)`.
 
-- [ ] **Step 1: Write failing state transition and policy decision tests**
+- [x] **Step 1: Write failing state transition and policy decision tests**
 
 ```python
 def test_feature_eft_selects_lowest_expected_completion(context, request):
@@ -244,23 +244,23 @@ def test_oracle_cannot_be_constructed_for_online_use():
         OracleEFTPolicy()
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python3 -m pytest tests/unit/test_scheduler_state.py tests/unit/test_policies.py -q`
 
 Expected: imports fail because scheduling modules are missing.
 
-- [ ] **Step 3: Implement state invariants and deterministic policies**
+- [x] **Step 3: Implement state invariants and deterministic policies**
 
 Store queued P95 at assignment. Compute running remainder from predicted finish and `now_ms`. Use stable GPU ID tie-breaking. The online request object never exposes `actual_render_ms_by_gpu`; only the offline oracle receives the trace record through a private mapping.
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run: `python3 -m pytest tests/unit/test_scheduler_state.py tests/unit/test_policies.py -q`
 
 Expected: all Task 4 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/geo_render/scheduling tests/unit/test_scheduler_state.py tests/unit/test_policies.py
