@@ -104,7 +104,7 @@ git commit -m "feat: add innovation one domain contracts"
 - Produces: `OnlineDurationStats(alpha, window_size, default_ms)` with `observe(...)` and hierarchical `estimate(...)`.
 - Produces: `group_split(records, train_fraction, validation_fraction, seed)` returning three disjoint record tuples.
 
-- [ ] **Step 1: Write failing geometry, update-order, and leakage tests**
+- [x] **Step 1: Write failing geometry, update-order, and leakage tests**
 
 ```python
 def test_feature_extraction_normalizes_view_direction(sample_inputs):
@@ -124,23 +124,23 @@ def test_group_split_never_splits_a_trajectory(records):
     assert groups[1].isdisjoint(groups[2])
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python3 -m pytest tests/unit/test_features.py tests/unit/test_online_stats.py tests/unit/test_dataset.py -q`
 
 Expected: imports fail because feature/history modules are missing.
 
-- [ ] **Step 3: Implement pure features, completed-only online statistics, and group splitting**
+- [x] **Step 3: Implement pure features, completed-only online statistics, and group splitting**
 
 The history fallback order is `(gpu, model) -> gpu -> global -> configured default`. EWMA uses `alpha`; empirical P95 uses a bounded deque. Group assignment uses a seeded shuffle of group IDs, never a row shuffle.
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run: `python3 -m pytest tests/unit/test_features.py tests/unit/test_online_stats.py tests/unit/test_dataset.py -q`
 
 Expected: all Task 2 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/geo_render/prediction tests/unit/test_features.py tests/unit/test_online_stats.py tests/unit/test_dataset.py
