@@ -1,5 +1,9 @@
+import math
 from pathlib import Path
 
+import pytest
+
+from geo_render.common.errors import ValidationError
 from geo_render.workload.synthetic import SyntheticTraceConfig, generate_synthetic_trace
 from geo_render.workload.trace import read_trace_csv, trace_sha256, write_trace_csv
 
@@ -48,3 +52,19 @@ def test_generated_arrivals_are_non_decreasing_and_ids_are_unique() -> None:
     request_ids = [record.request.request_id for record in trace]
     assert arrivals == sorted(arrivals)
     assert len(request_ids) == len(set(request_ids))
+
+
+def test_synthetic_config_rejects_non_finite_model_or_gpu_values() -> None:
+    with pytest.raises(ValidationError, match="finite positive"):
+        SyntheticTraceConfig(
+            seed=1,
+            request_count=2,
+            arrival_rate_per_second=1.0,
+            user_count=1,
+            trajectory_count=1,
+            model_base_render_ms={"model-a": math.nan},
+            gpu_speed={"gpu-0": 1.0},
+            output_sizes=((10, 10),),
+            sample_steps=(1.0,),
+            slo_ms=10.0,
+        )

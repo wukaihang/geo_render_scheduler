@@ -1,12 +1,11 @@
 import pytest
+from test_types import make_request
 
 from geo_render.common.errors import HardwareBackendUnavailable
 from geo_render.rendering.unavailable import (
     UnavailableDeviceStateProvider,
     UnavailableRenderer,
 )
-
-from test_types import make_request
 
 
 def test_unavailable_renderer_never_fabricates_measurements() -> None:

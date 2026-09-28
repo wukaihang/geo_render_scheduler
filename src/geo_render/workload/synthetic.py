@@ -35,10 +35,16 @@ class SyntheticTraceConfig:
             raise ValidationError("arrival_rate_per_second must be finite and positive")
         models = dict(self.model_base_render_ms)
         speeds = dict(self.gpu_speed)
-        if not models or any(value <= 0 for value in models.values()):
-            raise ValidationError("model_base_render_ms must contain positive values")
-        if not speeds or any(value <= 0 for value in speeds.values()):
-            raise ValidationError("gpu_speed must contain positive values")
+        if not models or any(
+            not math.isfinite(value) or value <= 0 for value in models.values()
+        ):
+            raise ValidationError(
+                "model_base_render_ms must contain finite positive values"
+            )
+        if not speeds or any(
+            not math.isfinite(value) or value <= 0 for value in speeds.values()
+        ):
+            raise ValidationError("gpu_speed must contain finite positive values")
         if not self.output_sizes or any(
             width <= 0 or height <= 0 for width, height in self.output_sizes
         ):

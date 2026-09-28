@@ -1,13 +1,12 @@
 from dataclasses import replace
 
 import pytest
-
-from geo_render.analysis.scheduling_metrics import jain_index, scheduling_metrics
-from geo_render.workload.replay import ReplayResult
-
 from test_replay import make_engine
 from test_trace import make_config
+
+from geo_render.analysis.scheduling_metrics import jain_index, scheduling_metrics
 from geo_render.scheduling.policies import RoundRobinPolicy
+from geo_render.workload.replay import ReplayResult
 from geo_render.workload.synthetic import generate_synthetic_trace
 
 

@@ -21,7 +21,6 @@ from geo_render.common.types import CostEstimate, TraceRecord
 from geo_render.workload.replay import ReplayResult
 from geo_render.workload.trace import trace_sha256, write_trace_csv
 
-
 REQUEST_FIELDS = (
     "request_id",
     "user_id",

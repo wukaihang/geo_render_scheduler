@@ -15,7 +15,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=8,<9"]
+test = [
+  "pytest>=8,<9",
+  "ruff>=0.16,<0.17",
+]
 
 [project.scripts]
 geo-render = "geo_render.cli:main"
@@ -27,3 +30,9 @@ where = ["src"]
 testpaths = ["tests"]
 addopts = "-ra"
 pythonpath = ["tests/unit", "tests/integration"]
+
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

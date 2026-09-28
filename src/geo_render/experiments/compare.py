@@ -46,7 +46,7 @@ def compare_policies(
             summaries[policy.name] = json.loads(
                 (run_dir / "summary.json").read_text(encoding="utf-8")
             )
-        except BaseException as error:
+        except Exception as error:
             failures[policy.name] = {
                 "type": type(error).__name__,
                 "message": str(error),

@@ -1,9 +1,13 @@
 import math
 
-from geo_render.common.types import DeviceState, DurationPrediction, ModelManifest
-from geo_render.prediction.features import extract_features
-
 from test_types import make_request
+
+from geo_render.common.types import DeviceState, DurationPrediction, ModelManifest
+from geo_render.prediction.features import (
+    FEATURE_GROUPS,
+    drop_feature_groups,
+    extract_features,
+)
 
 
 def make_manifest() -> ModelManifest:
@@ -67,3 +71,17 @@ def test_feature_extraction_marks_missing_telemetry() -> None:
     assert values["gpu_utilization_missing"] == 1.0
     assert values["gpu_temperature_missing"] == 1.0
     assert values["gpu_utilization_pct"] == 0.0
+
+
+def test_feature_ablation_removes_complete_named_groups_without_mutating_input() -> None:
+    values = extract_features(
+        make_request(),
+        make_manifest(),
+        make_device(),
+        DurationPrediction(20.0, 30.0, "history-v1"),
+    )
+    ablated = drop_feature_groups(values, ("view", "history"))
+    assert set(FEATURE_GROUPS["view"]).isdisjoint(ablated)
+    assert set(FEATURE_GROUPS["history"]).isdisjoint(ablated)
+    assert "model_id" in ablated
+    assert "view_x" in values

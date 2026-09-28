@@ -6,7 +6,7 @@ import math
 import random
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Generic, Mapping, Sequence, Tuple, TypeVar
+from typing import Mapping, Sequence, Tuple, TypeVar
 
 from geo_render.common.errors import ValidationError
 

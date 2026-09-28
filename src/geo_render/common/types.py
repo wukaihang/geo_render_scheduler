@@ -9,7 +9,6 @@ from typing import Mapping, Optional, Tuple
 
 from .errors import ValidationError
 
-
 Vector3 = Tuple[float, float, float]
 Dimensions3 = Tuple[int, int, int]
 Bounds6 = Tuple[float, float, float, float, float, float]
@@ -138,7 +137,10 @@ class ModelManifest:
 
     def __post_init__(self) -> None:
         _require_text("model_id", self.model_id)
-        if len(self.dimensions) != 3 or any(value <= 0 for value in self.dimensions):
+        if len(self.dimensions) != 3 or any(
+            not isinstance(value, int) or isinstance(value, bool) or value <= 0
+            for value in self.dimensions
+        ):
             raise ValidationError(
                 f"dimensions must contain three positive integers; got {self.dimensions!r}"
             )

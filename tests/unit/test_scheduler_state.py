@@ -1,12 +1,11 @@
 from dataclasses import replace
 
 import pytest
+from test_types import make_request
 
 from geo_render.common.errors import StateTransitionError
 from geo_render.common.types import DeviceState, QueuedRequest
 from geo_render.scheduling.state import ClusterState, WorkerState
-
-from test_types import make_request
 
 
 def make_device(gpu_id: str) -> DeviceState:

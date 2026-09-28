@@ -389,7 +389,7 @@ git commit -m "feat: report innovation one experiment metrics"
 - Consumes: all earlier public APIs.
 - Produces: `geo-render generate-trace`, `geo-render train`, `geo-render compare`, and `geo-render check-hardware` commands.
 
-- [ ] **Step 1: Write failing CLI smoke tests**
+- [x] **Step 1: Write failing CLI smoke tests**
 
 ```python
 def test_compare_cli_creates_policy_summaries(tmp_path):
@@ -407,21 +407,21 @@ def test_hardware_check_fails_actionably():
     assert "Linux" in result.stderr and "EGL" in result.stderr
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python3 -m pytest tests/integration/test_cli.py -q`
 
 Expected: command module is missing.
 
-- [ ] **Step 3: Implement argparse commands and example config**
+- [x] **Step 3: Implement argparse commands and example config**
 
 `generate-trace` creates and hashes a frozen CSV. `train` group-splits profile CSV and persists all requested predictor artifacts plus metrics. `compare` runs the six policies on one trace and writes a top-level comparison. `check-hardware` invokes unavailable adapters and exits with code 2 until the real adapter exists.
 
-- [ ] **Step 4: Document installation, commands, data provenance, and hardware extension points**
+- [x] **Step 4: Document installation, commands, data provenance, and hardware extension points**
 
 README must distinguish synthetic verification from paper evidence, show exact commands, define input/output schemas, and name `rendering/interface.py` as the hardware integration seam.
 
-- [ ] **Step 5: Run focused and full verification**
+- [x] **Step 5: Run focused and full verification**
 
 Run: `python3 -m pytest tests/integration/test_cli.py -q`
 
@@ -439,7 +439,7 @@ Run: `python3 -m geo_render check-hardware`
 
 Expected: exit code 2 and an actionable Linux/NVIDIA/VTK EGL message.
 
-- [ ] **Step 6: Audit design coverage and repository state**
+- [x] **Step 6: Audit design coverage and repository state**
 
 Run: `rg -n "TODO|TBD|NotImplementedError|pass$" src tests README.md configs || true`
 
@@ -449,9 +449,40 @@ Run: `git status --short`
 
 Expected: only intentional final documentation or verification artifacts are uncommitted.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/geo_render/cli.py src/geo_render/__main__.py configs/synthetic_example.json README.md tests/integration/test_cli.py
 git commit -m "feat: complete innovation one experiment workflow"
 ```
+
+### Task 8: Completion-audit gap closure
+
+**Files:**
+- Modify: `src/geo_render/prediction/models.py`
+- Modify: `src/geo_render/prediction/features.py`
+- Modify: `src/geo_render/prediction/training.py`
+- Modify: `src/geo_render/scheduling/policies.py`
+- Modify: `src/geo_render/common/types.py`
+- Modify: `src/geo_render/workload/synthetic.py`
+- Modify: `README.md`
+- Modify: `docs/superpowers/specs/2026-09-28-innovation-one-design.md`
+- Test: `tests/unit/test_predictors.py`
+- Test: `tests/unit/test_features.py`
+- Test: `tests/unit/test_policies.py`
+- Test: `tests/unit/test_types.py`
+- Test: `tests/unit/test_trace.py`
+
+**Interfaces:**
+- Produces: `MeanGBDTPredictor` and four named quantile-GBDT feature-ablation artifacts.
+- Strengthens: Oracle consumes actual render/readback/encode stages and Least Queue counts running work.
+
+- [x] **Step 1: Add failing tests for omitted predictor, ablation, queue, and oracle requirements**
+
+- [x] **Step 2: Implement Mean GBDT, feature-group ablation, and artifact parameter metadata**
+
+- [x] **Step 3: Correct Least Queue and full-stage offline Oracle semantics**
+
+- [x] **Step 4: Re-run CLI workflows, static checks, compilation, and the complete test suite**
+
+- [x] **Step 5: Commit the completed implementation**

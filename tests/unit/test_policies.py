@@ -1,12 +1,15 @@
 from dataclasses import replace
 
 import pytest
+from test_scheduler_state import make_device
+from test_types import make_request
 
 from geo_render.common.errors import OracleAccessError
 from geo_render.common.types import (
     DurationPrediction,
     ModelManifest,
     QueuedRequest,
+    TraceRecord,
     WorkerSnapshot,
 )
 from geo_render.prediction.baselines import EWMAPredictor
@@ -20,9 +23,6 @@ from geo_render.scheduling.policies import (
     RoundRobinPolicy,
     StaticWeightedPolicy,
 )
-
-from test_scheduler_state import make_device
-from test_types import make_request
 
 
 class DeviceAwarePredictor:
@@ -113,6 +113,11 @@ def test_least_queue_and_static_weighted_use_their_declared_scores() -> None:
     assert weighted.choose(request, weighted_context).gpu_id == "gpu-1"
 
 
+def test_least_queue_counts_the_running_request() -> None:
+    context = make_context(gpu0_finish=100.0)
+    assert LeastQueuePolicy().choose(make_request(), context).gpu_id == "gpu-1"
+
+
 def test_ewma_eft_uses_same_scheduler_contract() -> None:
     row = LabeledSample(
         request_id="profile-1",
@@ -143,9 +148,32 @@ def test_oracle_cannot_be_constructed_for_online_use() -> None:
 
 
 def test_oracle_uses_private_offline_duration_mapping() -> None:
-    policy = OracleEFTPolicy.for_offline_replay(
-        {"request-1": {"gpu-0": 50.0, "gpu-1": 10.0}}
+    record = TraceRecord(
+        request=make_request(),
+        actual_render_ms_by_gpu={"gpu-0": 50.0, "gpu-1": 10.0},
+        actual_readback_ms_by_gpu={"gpu-0": 2.0, "gpu-1": 3.0},
+        actual_encode_ms=4.0,
+        isolated_p50_ms=17.0,
+        source="synthetic",
     )
+    policy = OracleEFTPolicy.for_offline_replay((record,))
     decision = policy.choose(make_request(), make_context())
     assert decision.gpu_id == "gpu-1"
     assert decision.policy == "oracle-eft"
+
+
+def test_oracle_from_trace_uses_actual_readback_and_encode_stages() -> None:
+    record = TraceRecord(
+        request=make_request(),
+        actual_render_ms_by_gpu={"gpu-0": 10.0, "gpu-1": 20.0},
+        actual_readback_ms_by_gpu={"gpu-0": 100.0, "gpu-1": 0.0},
+        actual_encode_ms=1.0,
+        isolated_p50_ms=21.0,
+        source="synthetic",
+    )
+    decision = OracleEFTPolicy.from_trace((record,)).choose(
+        make_request(), make_context()
+    )
+    assert decision.gpu_id == "gpu-1"
+    assert decision.costs["gpu-0"].predicted_readback_ms == 100.0
+    assert decision.costs["gpu-1"].predicted_encode_ms == 1.0

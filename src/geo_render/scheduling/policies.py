@@ -12,6 +12,7 @@ from geo_render.common.types import (
     DurationPrediction,
     RenderRequest,
     ScheduleDecision,
+    TraceRecord,
     WorkerSnapshot,
 )
 from geo_render.prediction.features import extract_features
@@ -29,6 +30,8 @@ def _cost(
     worker: WorkerSnapshot,
     context: SchedulerContext,
     prediction: DurationPrediction,
+    readback_override_ms: Optional[float] = None,
+    encode_override_ms: Optional[float] = None,
 ) -> CostEstimate:
     running = (
         0.0
@@ -36,8 +39,12 @@ def _cost(
         else max(0.0, worker.running_predicted_finish_ms - context.now_ms)
     )
     queued = _queued_work(worker)
-    readback = context.predicted_readback_ms_by_gpu[worker.gpu_id]
-    encode = context.predicted_encode_ms
+    readback = (
+        context.predicted_readback_ms_by_gpu[worker.gpu_id]
+        if readback_override_ms is None
+        else readback_override_ms
+    )
+    encode = context.predicted_encode_ms if encode_override_ms is None else encode_override_ms
     total = running + queued + prediction.p95_ms + readback + encode
     return CostEstimate(
         gpu_id=worker.gpu_id,
@@ -93,13 +100,21 @@ class LeastQueuePolicy:
         self, request: RenderRequest, context: SchedulerContext
     ) -> ScheduleDecision:
         selected_worker = min(
-            context.workers, key=lambda worker: (len(worker.queued), worker.gpu_id)
+            context.workers,
+            key=lambda worker: (
+                len(worker.queued)
+                + (1 if worker.current_request_id is not None else 0),
+                worker.gpu_id,
+            ),
+        )
+        selected_length = len(selected_worker.queued) + (
+            1 if selected_worker.current_request_id is not None else 0
         )
         return ScheduleDecision(
             request_id=request.request_id,
             gpu_id=selected_worker.gpu_id,
             policy=self.name,
-            reason=f"queued_requests={len(selected_worker.queued)}",
+            reason=f"outstanding_requests={selected_length}",
             costs=_history_costs(request, context),
         )
 
@@ -190,28 +205,49 @@ class OracleEFTPolicy:
     def __init__(
         self,
         token: Optional[object] = None,
-        actual_by_request: Optional[Mapping[str, Mapping[str, float]]] = None,
+        trace: Optional[Tuple[TraceRecord, ...]] = None,
     ) -> None:
-        if token is not _ORACLE_TOKEN or actual_by_request is None:
+        if token is not _ORACLE_TOKEN or trace is None:
             raise OracleAccessError(
                 "OracleEFTPolicy is available only through for_offline_replay()"
             )
-        copied: Dict[str, Mapping[str, float]] = {}
-        for request_id, values in actual_by_request.items():
-            copied[request_id] = MappingProxyType(dict(values))
-        self._actual_by_request = MappingProxyType(copied)
+        render = {}
+        readback = {}
+        encode = {}
+        for record in trace:
+            request_id = record.request.request_id
+            if request_id in render:
+                raise OracleAccessError(f"duplicate oracle request {request_id!r}")
+            render[request_id] = MappingProxyType(
+                dict(record.actual_render_ms_by_gpu)
+            )
+            readback[request_id] = MappingProxyType(
+                dict(record.actual_readback_ms_by_gpu)
+            )
+            encode[request_id] = record.actual_encode_ms
+        if not render:
+            raise OracleAccessError("offline oracle trace must not be empty")
+        self._actual_render_by_request = MappingProxyType(render)
+        self._actual_readback_by_request = MappingProxyType(readback)
+        self._actual_encode_by_request = MappingProxyType(encode)
 
     @classmethod
     def for_offline_replay(
-        cls, actual_by_request: Mapping[str, Mapping[str, float]]
+        cls, trace: Tuple[TraceRecord, ...]
     ) -> "OracleEFTPolicy":
-        return cls(_ORACLE_TOKEN, actual_by_request)
+        return cls(_ORACLE_TOKEN, tuple(trace))
+
+    @classmethod
+    def from_trace(cls, trace: Tuple[TraceRecord, ...]) -> "OracleEFTPolicy":
+        return cls.for_offline_replay(trace)
 
     def choose(
         self, request: RenderRequest, context: SchedulerContext
     ) -> ScheduleDecision:
         try:
-            actual = self._actual_by_request[request.request_id]
+            actual_render = self._actual_render_by_request[request.request_id]
+            actual_readback = self._actual_readback_by_request[request.request_id]
+            actual_encode = self._actual_encode_by_request[request.request_id]
         except KeyError as error:
             raise OracleAccessError(
                 f"oracle has no offline durations for request {request.request_id!r}"
@@ -219,14 +255,22 @@ class OracleEFTPolicy:
         costs = {}
         for worker in context.workers:
             try:
-                duration = actual[worker.gpu_id]
+                duration = actual_render[worker.gpu_id]
+                readback = actual_readback[worker.gpu_id]
             except KeyError as error:
                 raise OracleAccessError(
                     f"oracle request {request.request_id!r} has no duration for "
                     f"GPU {worker.gpu_id!r}"
                 ) from error
             prediction = DurationPrediction(duration, duration, "offline-oracle")
-            costs[worker.gpu_id] = _cost(request, worker, context, prediction)
+            costs[worker.gpu_id] = _cost(
+                request,
+                worker,
+                context,
+                prediction,
+                readback_override_ms=readback,
+                encode_override_ms=actual_encode,
+            )
         selected = min(costs, key=lambda gpu_id: (costs[gpu_id].total_ms, gpu_id))
         return ScheduleDecision(
             request_id=request.request_id,

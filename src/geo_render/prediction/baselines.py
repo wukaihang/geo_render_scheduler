@@ -66,6 +66,9 @@ class GlobalMeanPredictor:
             (gpu_id, model_id), self._by_gpu.get(gpu_id, self._global)
         )
 
+    def artifact_parameters(self) -> dict:
+        return {"aggregation": "mean", "p95": "empirical"}
+
 
 class EWMAPredictor:
     def __init__(self, alpha: float, window_size: int, default_ms: float) -> None:
@@ -88,3 +91,11 @@ class EWMAPredictor:
             raise ModelNotFittedError("EWMAPredictor must be fitted before predict")
         gpu_id, model_id = _identity(features)
         return self.stats.estimate(gpu_id, model_id)
+
+    def artifact_parameters(self) -> dict:
+        return {
+            "alpha": self.stats.alpha,
+            "window_size": self.stats.window_size,
+            "default_ms": self.stats.default_ms,
+            "p95": "empirical_recent_window",
+        }

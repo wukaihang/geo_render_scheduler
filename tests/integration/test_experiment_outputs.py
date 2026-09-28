@@ -2,14 +2,13 @@ import json
 from pathlib import Path
 
 import pytest
+from test_replay import make_engine
 
 from geo_render.common.errors import ValidationError
 from geo_render.experiments.compare import compare_policies
 from geo_render.experiments.io import write_run_directory
 from geo_render.scheduling.policies import LeastQueuePolicy, RoundRobinPolicy
 from geo_render.workload.synthetic import generate_synthetic_trace
-
-from test_replay import make_engine
 
 
 def make_config(seed: int = 23, request_count: int = 10):

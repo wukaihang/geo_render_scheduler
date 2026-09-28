@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, Optional, Union
+from types import MappingProxyType
+from typing import Dict, Iterable, Mapping, Optional, Union
 
 from geo_render.common.errors import ValidationError
 from geo_render.common.types import (
@@ -13,8 +14,76 @@ from geo_render.common.types import (
     RenderRequest,
 )
 
-
 FeatureValue = Union[float, str]
+
+FEATURE_GROUPS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "model": (
+            "model_id",
+            "dim_x",
+            "dim_y",
+            "dim_z",
+            "voxel_count",
+            "active_voxel_fraction",
+            "model_bytes",
+            "layer_count",
+        ),
+        "view": (
+            "camera_distance",
+            "view_x",
+            "view_y",
+            "view_z",
+            "projected_area_ratio",
+            "projection",
+            "view_angle_deg",
+            "clip_fraction",
+        ),
+        "render": (
+            "output_width",
+            "output_height",
+            "output_pixels",
+            "sample_step",
+            "shadows",
+            "transfer_function_id",
+        ),
+        "device": (
+            "gpu_id",
+            "gpu_model",
+            "gpu_memory_total_bytes",
+            "gpu_historical_speed",
+            "gpu_utilization_pct",
+            "gpu_utilization_missing",
+            "gpu_memory_utilization_pct",
+            "gpu_memory_utilization_missing",
+            "gpu_temperature",
+            "gpu_temperature_missing",
+            "gpu_power_w",
+            "gpu_power_missing",
+        ),
+        "history": (
+            "history_p50_ms",
+            "history_p95_ms",
+            "history_version",
+        ),
+    }
+)
+
+
+def drop_feature_groups(
+    features: Mapping[str, FeatureValue], excluded_groups: Iterable[str]
+) -> Dict[str, FeatureValue]:
+    """Return a copy without complete named groups for controlled ablations."""
+    groups = tuple(excluded_groups)
+    unknown = sorted(set(groups) - set(FEATURE_GROUPS))
+    if unknown:
+        raise ValidationError(f"unknown feature groups: {', '.join(unknown)}")
+    excluded_keys = {
+        key for group in groups for key in FEATURE_GROUPS[group]
+    }
+    remaining = {key: value for key, value in features.items() if key not in excluded_keys}
+    if not remaining:
+        raise ValidationError("feature ablation removed every feature")
+    return remaining
 
 
 def _telemetry(

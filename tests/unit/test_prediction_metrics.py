@@ -1,7 +1,7 @@
 import pytest
 
-from geo_render.common.errors import ValidationError
 from geo_render.analysis.prediction_metrics import prediction_metrics
+from geo_render.common.errors import ValidationError
 
 
 def test_prediction_metrics_cover_required_error_and_calibration_values() -> None:

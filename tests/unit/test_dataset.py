@@ -1,9 +1,9 @@
 from dataclasses import replace
 
+from test_types import make_request
+
 from geo_render.common.types import TraceRecord
 from geo_render.prediction.dataset import group_split
-
-from test_types import make_request
 
 
 def make_records() -> tuple[TraceRecord, ...]:

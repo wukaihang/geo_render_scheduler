@@ -13,7 +13,6 @@ import sklearn
 
 from geo_render.common.errors import ValidationError
 
-
 ARTIFACT_SCHEMA_VERSION = "innovation-one-artifact-v1"
 FEATURE_SCHEMA_VERSION = "innovation-one-features-v1"
 
@@ -29,10 +28,14 @@ def save_artifact(path: Path, predictor: Any, training_sha256: str) -> Path:
     _validate_sha256(training_sha256)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    parameter_provider = getattr(predictor, "artifact_parameters", None)
+    parameters = parameter_provider() if callable(parameter_provider) else {}
     envelope = {
         "schema_version": ARTIFACT_SCHEMA_VERSION,
         "feature_schema_version": FEATURE_SCHEMA_VERSION,
         "training_sha256": training_sha256.lower(),
+        "predictor_class": type(predictor).__name__,
+        "parameters": parameters,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "versions": {
             "python": platform.python_version(),

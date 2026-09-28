@@ -11,7 +11,6 @@ from typing import Dict, Iterable, Tuple
 from geo_render.common.errors import ValidationError
 from geo_render.common.types import Camera, RenderRequest, TraceRecord
 
-
 TRACE_FIELDS = (
     "request_id",
     "user_id",

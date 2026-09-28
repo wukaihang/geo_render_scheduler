@@ -74,6 +74,19 @@ def test_manifest_validates_shape_bounds_and_checksum() -> None:
         )
 
 
+def test_manifest_rejects_non_integer_dimensions() -> None:
+    with pytest.raises(ValidationError, match="positive integers"):
+        ModelManifest(
+            model_id="model-a",
+            dimensions=(128, 128.5, 128),
+            active_voxel_fraction=0.5,
+            data_bytes=1024,
+            layer_count=3,
+            bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+            sha256="a" * 64,
+        )
+
+
 def test_unknown_device_telemetry_is_none_not_zero() -> None:
     device = DeviceState(
         gpu_id="gpu-0",

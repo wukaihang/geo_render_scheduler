@@ -8,6 +8,7 @@ from geo_render.prediction.artifacts import load_artifact, save_artifact
 from geo_render.prediction.baselines import EWMAPredictor, GlobalMeanPredictor
 from geo_render.prediction.dataset import LabeledSample
 from geo_render.prediction.models import (
+    MeanGBDTPredictor,
     QuantileGBDTPredictor,
     RidgeDurationPredictor,
 )
@@ -43,6 +44,7 @@ def predictor_factories():
         lambda: GlobalMeanPredictor(),
         lambda: EWMAPredictor(alpha=0.3, window_size=16, default_ms=50.0),
         lambda: RidgeDurationPredictor(),
+        lambda: MeanGBDTPredictor(n_estimators=20, max_depth=2, seed=7),
         lambda: QuantileGBDTPredictor(n_estimators=20, max_depth=2, seed=7),
     )
 
@@ -87,3 +89,15 @@ def test_artifact_loader_rejects_unknown_schema(tmp_path: Path) -> None:
     joblib.dump({"schema_version": "wrong", "predictor": object()}, path)
     with pytest.raises(ValidationError, match="schema_version"):
         load_artifact(path)
+
+
+def test_artifact_records_predictor_class_and_training_parameters(tmp_path: Path) -> None:
+    predictor = MeanGBDTPredictor(
+        n_estimators=17, max_depth=2, learning_rate=0.07, seed=9
+    ).fit(training_rows())
+    path = tmp_path / "mean-gbdt.joblib"
+    save_artifact(path, predictor, training_sha256="b" * 64)
+    envelope = joblib.load(path)
+    assert envelope["predictor_class"] == "MeanGBDTPredictor"
+    assert envelope["parameters"]["n_estimators"] == 17
+    assert envelope["parameters"]["seed"] == 9

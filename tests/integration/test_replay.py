@@ -82,17 +82,13 @@ def make_engine() -> ReplayEngine:
 
 
 def all_policies(trace):
-    actual = {
-        record.request.request_id: dict(record.actual_render_ms_by_gpu)
-        for record in trace
-    }
     return (
         RoundRobinPolicy(),
         LeastQueuePolicy(),
         StaticWeightedPolicy({"gpu-0": 1.0, "gpu-1": 0.8}),
         EFTPolicy(ConstantPredictor(), policy_name="ewma-eft"),
         EFTPolicy(ConstantPredictor(), policy_name="feature-eft"),
-        OracleEFTPolicy.for_offline_replay(actual),
+        OracleEFTPolicy.for_offline_replay(tuple(trace)),
     )
 
 

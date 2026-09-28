@@ -63,6 +63,83 @@ class RidgeDurationPredictor:
             model_version="ridge-v1",
         )
 
+    def artifact_parameters(self) -> dict:
+        return {
+            "alpha": self.alpha,
+            "floor_ms": self.floor_ms,
+            "residual_p95_ms": self.residual_p95_ms,
+            "solver": "lsqr",
+        }
+
+
+class MeanGBDTPredictor:
+    def __init__(
+        self,
+        n_estimators: int = 100,
+        max_depth: int = 3,
+        learning_rate: float = 0.05,
+        seed: int = 0,
+        floor_ms: float = 0.001,
+    ) -> None:
+        if n_estimators <= 0 or max_depth <= 0:
+            raise ValidationError("n_estimators and max_depth must be positive")
+        if learning_rate <= 0 or not math.isfinite(learning_rate):
+            raise ValidationError("learning_rate must be finite and positive")
+        if floor_ms <= 0 or not math.isfinite(floor_ms):
+            raise ValidationError("floor_ms must be finite and positive")
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.learning_rate = learning_rate
+        self.seed = seed
+        self.floor_ms = floor_ms
+        self.vectorizer = DictVectorizer(sparse=False)
+        self.model = GradientBoostingRegressor(
+            loss="squared_error",
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            random_state=seed,
+        )
+        self.residual_p95_ms: Optional[float] = None
+
+    def fit(
+        self,
+        samples: Sequence[LabeledSample],
+        validation_samples: Optional[Sequence[LabeledSample]] = None,
+    ) -> "MeanGBDTPredictor":
+        features, targets = _rows(samples)
+        matrix = self.vectorizer.fit_transform(features)
+        self.model.fit(matrix, targets)
+        calibration = validation_samples if validation_samples else samples
+        calibration_features, calibration_targets = _rows(calibration)
+        predictions = self.model.predict(self.vectorizer.transform(calibration_features))
+        self.residual_p95_ms = max(
+            0.0, float(np.percentile(calibration_targets - predictions, 95))
+        )
+        return self
+
+    def predict(self, features: Mapping[str, FeatureValue]) -> DurationPrediction:
+        if self.residual_p95_ms is None:
+            raise ModelNotFittedError("MeanGBDTPredictor must be fitted before predict")
+        raw = float(self.model.predict(self.vectorizer.transform([dict(features)]))[0])
+        p50 = max(self.floor_ms, raw)
+        return DurationPrediction(
+            p50_ms=p50,
+            p95_ms=max(p50, p50 + self.residual_p95_ms),
+            model_version="mean-gbdt-v1",
+        )
+
+    def artifact_parameters(self) -> dict:
+        return {
+            "n_estimators": self.n_estimators,
+            "max_depth": self.max_depth,
+            "learning_rate": self.learning_rate,
+            "seed": self.seed,
+            "floor_ms": self.floor_ms,
+            "residual_p95_ms": self.residual_p95_ms,
+            "loss": "squared_error",
+        }
+
 
 class QuantileGBDTPredictor:
     def __init__(
@@ -79,6 +156,10 @@ class QuantileGBDTPredictor:
             raise ValidationError("learning_rate must be finite and positive")
         if floor_ms <= 0 or not math.isfinite(floor_ms):
             raise ValidationError("floor_ms must be finite and positive")
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.learning_rate = learning_rate
+        self.seed = seed
         self.floor_ms = floor_ms
         self.vectorizer = DictVectorizer(sparse=False)
         common = {
@@ -113,3 +194,14 @@ class QuantileGBDTPredictor:
             p95_ms=max(p50, raw_p95),
             model_version="quantile-gbdt-v1",
         )
+
+    def artifact_parameters(self) -> dict:
+        return {
+            "n_estimators": self.n_estimators,
+            "max_depth": self.max_depth,
+            "learning_rate": self.learning_rate,
+            "seed": self.seed,
+            "floor_ms": self.floor_ms,
+            "quantiles": [0.5, 0.95],
+            "loss": "quantile",
+        }

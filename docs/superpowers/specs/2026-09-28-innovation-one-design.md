@@ -11,7 +11,8 @@
 ### 包含
 
 - 五类特征：模型、视角、渲染参数、设备状态和在线历史。
-- 四类预测方法：按模型/GPU 的历史均值、按模型/GPU 的 EWMA、岭回归、P50/P95 分位数梯度提升。
+- 五类预测方法：按模型/GPU 的历史均值、按模型/GPU 的 EWMA、岭回归、均值梯度提升、P50/P95 分位数梯度提升。
+- 模型、视角、设备和在线历史四组特征的自动消融训练与独立测试集评价。
 - 六类调度策略：Round Robin、Least Queue、Static Weighted、EWMA-EFT、Feature-EFT 和仅供离线回放的 Oracle-EFT。
 - 每 GPU 运行中请求与排队请求的显式状态，以及基于 P95 的剩余工作量估计。
 - 按轨迹/会话分组的数据切分，防止连续帧泄漏。
@@ -82,6 +83,7 @@ ECT = running_remaining_ms
 - GlobalMean：按 GPU 和模型回退；层级为 `(gpu, model)`、`gpu`、全局。
 - EWMA：只由已完成结果更新，同样使用分层回退，并维护近期样本的经验 P95。
 - Ridge：统一模型显式包含 GPU 特征，输出 P50；验证集残差分位数用于构造 P95。
+- Mean GBDT：以平方误差训练均值模型，并用验证集上界残差构造 P95。
 - Quantile GBDT：分别以 0.50 和 0.95 分位数损失训练两个模型。
 
 模型工件保存训练配置、特征模式版本、依赖版本、训练数据 SHA-256 和预测器本体。加载时校验模式版本。
@@ -91,11 +93,11 @@ ECT = running_remaining_ms
 所有策略实现同一个 `SchedulerPolicy.choose(request, context)` 接口：
 
 - Round Robin：按稳定 GPU 顺序循环。
-- Least Queue：选择排队请求数最少的 GPU，运行中请求不计入排队数但参与稳定平局规则。
+- Least Queue：选择运行中与排队请求总数最少的 GPU，并按 GPU ID 稳定打破平局。
 - Static Weighted：使用离线给定的相对服务率，通过最小化 `(running + queued + 1) / rate` 分派。
 - EWMA-EFT：使用 EWMA 的 P95 估计计算 ECT。
 - Feature-EFT：使用内容、设备与历史特征预测器的 P95 计算 ECT；这是创新点一的主策略。
-- Oracle-EFT：只在离线回放中读取轨迹内真实服务时间，不允许实时入口构造。
+- Oracle-EFT：只在离线回放中读取轨迹内真实 render、readback 和 encode 时间，不允许实时入口构造。
 
 运行中剩余时间以 `max(0, predicted_finish - now)` 计算。排队请求保存其在目标 GPU 上决策时的 P95 预测值；请求开始或完成时状态机校验请求 ID 和 GPU 一致，非法转换立即报错。
 
