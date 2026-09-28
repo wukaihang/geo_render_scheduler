@@ -165,7 +165,7 @@ git commit -m "feat: extract render features and online history"
 - Produces: `GlobalMeanPredictor`, `EWMAPredictor`, `RidgeDurationPredictor`, and `QuantileGBDTPredictor`.
 - Produces: `save_artifact(...)`, `load_artifact(...)`, and `prediction_metrics(actual, p50, p95)`.
 
-- [ ] **Step 1: Write failing predictor contract, persistence, and metric tests**
+- [x] **Step 1: Write failing predictor contract, persistence, and metric tests**
 
 ```python
 @pytest.mark.parametrize("factory", predictor_factories())
@@ -181,17 +181,17 @@ def test_artifact_round_trip_preserves_predictions(tmp_path, fitted_predictor, r
     assert restored.predict(row.features) == fitted_predictor.predict(row.features)
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python3 -m pytest tests/unit/test_predictors.py tests/unit/test_prediction_metrics.py -q`
 
 Expected: imports fail because predictor modules are missing.
 
-- [ ] **Step 3: Implement baseline and scikit-learn predictors**
+- [x] **Step 3: Implement baseline and scikit-learn predictors**
 
 Use `DictVectorizer(sparse=False)` plus `Ridge` for the linear model. Use two `GradientBoostingRegressor(loss="quantile", alpha=0.5/0.95)` instances for GBDT. Clamp predictions to a configured positive floor and enforce `p95=max(p50,p95)`. Persist a versioned envelope containing feature schema version, training hash, library versions, and model.
 
-- [ ] **Step 4: Implement prediction metrics**
+- [x] **Step 4: Implement prediction metrics**
 
 ```python
 return {
@@ -203,13 +203,13 @@ return {
 }
 ```
 
-- [ ] **Step 5: Run tests and verify GREEN**
+- [x] **Step 5: Run tests and verify GREEN**
 
 Run: `python3 -m pytest tests/unit/test_predictors.py tests/unit/test_prediction_metrics.py -q`
 
 Expected: all Task 3 tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/geo_render/prediction src/geo_render/analysis tests/unit/test_predictors.py tests/unit/test_prediction_metrics.py
