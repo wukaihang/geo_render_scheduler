@@ -335,7 +335,7 @@ git commit -m "feat: add deterministic workload replay"
 - Produces: `scheduling_metrics(result) -> dict[str, object]`.
 - Produces: `write_run_directory(...)` and `compare_policies(...)`.
 
-- [ ] **Step 1: Write failing metric and artifact-completeness tests**
+- [x] **Step 1: Write failing metric and artifact-completeness tests**
 
 ```python
 def test_run_directory_is_self_contained(tmp_path, small_experiment):
@@ -349,27 +349,27 @@ def test_jain_index_is_one_for_equal_user_slowdown():
     assert jain_index([2.0, 2.0]) == pytest.approx(1.0)
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python3 -m pytest tests/unit/test_scheduling_metrics.py tests/integration/test_experiment_outputs.py -q`
 
 Expected: imports fail because metrics/experiment modules are missing.
 
-- [ ] **Step 3: Implement latency, SLO, utilization, fairness, and workload-balance metrics**
+- [x] **Step 3: Implement latency, SLO, utilization, fairness, and workload-balance metrics**
 
 Percentiles use NumPy's linear method. Slowdown uses each trace record's isolated P50 label when present; missing labels produce `null` slowdown metrics rather than fabricated values. Throughput divides completed requests by the observed arrival-to-finish window.
 
-- [ ] **Step 4: Implement atomic run-directory writing and policy comparison**
+- [x] **Step 4: Implement atomic run-directory writing and policy comparison**
 
 Write into a sibling temporary directory, flush every file, then rename to the final path. Existing final directories are rejected. `metadata.json` includes `source`, seed, trace SHA-256, Python/library versions, and Git commit if available.
 
-- [ ] **Step 5: Run tests and verify GREEN**
+- [x] **Step 5: Run tests and verify GREEN**
 
 Run: `python3 -m pytest tests/unit/test_scheduling_metrics.py tests/integration/test_experiment_outputs.py -q`
 
 Expected: all Task 6 tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/geo_render/analysis src/geo_render/experiments tests/unit/test_scheduling_metrics.py tests/integration/test_experiment_outputs.py
