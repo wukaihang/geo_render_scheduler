@@ -1,4 +1,4 @@
-"""Shared domain contracts."""
+"""共享领域契约。"""
 
 from .errors import (
     HardwareBackendUnavailable,

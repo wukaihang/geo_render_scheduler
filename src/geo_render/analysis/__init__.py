@@ -1,4 +1,4 @@
-"""Prediction and scheduling metrics."""
+"""预测与调度指标。"""
 
 from .prediction_metrics import prediction_metrics
 from .scheduling_metrics import jain_index, scheduling_metrics

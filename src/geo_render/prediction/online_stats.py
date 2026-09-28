@@ -1,4 +1,4 @@
-"""Online completed-request duration statistics with hierarchical fallback."""
+"""带分层回退的已完成请求在线耗时统计。"""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class _Series:
 
     def prediction(self, suffix: str) -> DurationPrediction:
         if self.ewma_ms is None:
-            raise RuntimeError("empty series cannot produce a prediction")
+            raise RuntimeError("空序列无法生成预测")
         empirical_p95 = float(np.percentile(tuple(self.recent_ms), 95))
         return DurationPrediction(
             p50_ms=self.ewma_ms,
@@ -41,15 +41,15 @@ class _Series:
 
 
 class OnlineDurationStats:
-    """Tracks only observations explicitly reported through :meth:`observe`."""
+    """只跟踪通过 :meth:`observe` 明确报告的观测值。"""
 
     def __init__(self, alpha: float, window_size: int, default_ms: float) -> None:
         if not math.isfinite(alpha) or not 0 < alpha <= 1:
-            raise ValidationError(f"alpha must be in (0, 1]; got {alpha!r}")
+            raise ValidationError(f"alpha 必须位于 (0, 1]；实际为 {alpha!r}")
         if window_size < 2:
-            raise ValidationError("window_size must be at least 2")
+            raise ValidationError("window_size 必须至少为 2")
         if not math.isfinite(default_ms) or default_ms <= 0:
-            raise ValidationError("default_ms must be finite and positive")
+            raise ValidationError("default_ms 必须是有限正数")
         self.alpha = alpha
         self.window_size = window_size
         self.default_ms = default_ms
@@ -70,10 +70,10 @@ class OnlineDurationStats:
     def observe(self, gpu_id: str, model_id: str, duration_ms: float) -> None:
         if not math.isfinite(duration_ms) or duration_ms <= 0:
             raise ValidationError(
-                f"duration_ms must be finite and positive; got {duration_ms!r}"
+                f"duration_ms 必须是有限正数；实际为 {duration_ms!r}"
             )
         if not gpu_id or not model_id:
-            raise ValidationError("gpu_id and model_id must be non-empty")
+            raise ValidationError("gpu_id 和 model_id 不得为空")
         self._series(self._by_gpu_model, (gpu_id, model_id)).observe(
             duration_ms, self.alpha
         )

@@ -1,4 +1,4 @@
-"""Validated worker and cluster queue state machines."""
+"""经过校验的 worker 与集群队列状态机。"""
 
 from __future__ import annotations
 
@@ -28,16 +28,16 @@ class WorkerState:
         request_id = queued.request.request_id
         if self._contains(request_id):
             raise StateTransitionError(
-                f"duplicate request_id {request_id!r} on worker {self.device.gpu_id!r}"
+                f"worker {self.device.gpu_id!r} 上的 request_id 重复：{request_id!r}"
             )
         self.queue.append(queued)
 
     def start_next(self, now_ms: float) -> Optional[QueuedRequest]:
         if not math.isfinite(now_ms) or now_ms < 0:
-            raise ValidationError("now_ms must be finite and non-negative")
+            raise ValidationError("now_ms 必须有限且非负")
         if self.current is not None:
             raise StateTransitionError(
-                f"worker {self.device.gpu_id!r} is already running "
+                f"worker {self.device.gpu_id!r} 已在运行请求 "
                 f"{self.current.request.request_id!r}"
             )
         if not self.queue:
@@ -51,15 +51,15 @@ class WorkerState:
     def complete(self, request_id: str, now_ms: float) -> QueuedRequest:
         if self.current is None:
             raise StateTransitionError(
-                f"worker {self.device.gpu_id!r} has no running request to complete"
+                f"worker {self.device.gpu_id!r} 没有可完成的运行中请求"
             )
         if self.current.request.request_id != request_id:
             raise StateTransitionError(
-                f"completion request_id {request_id!r} does not match running "
-                f"request {self.current.request.request_id!r}"
+                f"完成事件 request_id {request_id!r} 与运行中请求 "
+                f"{self.current.request.request_id!r} 不一致"
             )
         if self.current_started_ms is None or now_ms < self.current_started_ms:
-            raise StateTransitionError("completion time precedes request start time")
+            raise StateTransitionError("完成时间早于请求开始时间")
         completed = self.current
         self.current = None
         self.current_started_ms = None
@@ -83,10 +83,10 @@ class ClusterState:
         self._workers: Dict[str, WorkerState] = {}
         for device in devices:
             if device.gpu_id in self._workers:
-                raise ValidationError(f"duplicate gpu_id {device.gpu_id!r}")
+                raise ValidationError(f"gpu_id 重复：{device.gpu_id!r}")
             self._workers[device.gpu_id] = WorkerState(device)
         if not self._workers:
-            raise ValidationError("cluster requires at least one device")
+            raise ValidationError("集群至少需要一个设备")
 
     @property
     def gpu_ids(self) -> Tuple[str, ...]:
@@ -96,7 +96,7 @@ class ClusterState:
         try:
             return self._workers[gpu_id]
         except KeyError as error:
-            raise ValidationError(f"unknown gpu_id {gpu_id!r}") from error
+            raise ValidationError(f"未知 gpu_id {gpu_id!r}") from error
 
     def _request_exists(self, request_id: str) -> bool:
         return any(worker._contains(request_id) for worker in self._workers.values())
@@ -104,7 +104,7 @@ class ClusterState:
     def enqueue(self, gpu_id: str, queued: QueuedRequest) -> None:
         if self._request_exists(queued.request.request_id):
             raise StateTransitionError(
-                f"duplicate request_id {queued.request.request_id!r} across cluster"
+                f"集群中的 request_id 重复：{queued.request.request_id!r}"
             )
         self.worker(gpu_id).enqueue(queued)
 

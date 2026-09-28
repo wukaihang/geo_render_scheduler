@@ -1,4 +1,4 @@
-# Geo Render Scheduler
+# 三维地质体渲染调度器（Geo Render Scheduler）
 
 面向单机多 GPU 三维地质体绘制的内容与运行状态感知耗时预测、预计完成时间（EFT）调度实验代码。当前版本实现论文“创新点一”，并把真实 VTK/EGL/NVML 依赖隔离在硬件适配器边界之外。
 

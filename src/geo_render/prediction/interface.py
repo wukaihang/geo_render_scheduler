@@ -1,4 +1,4 @@
-"""Predictor contracts shared by schedulers and training commands."""
+"""调度器与训练命令共享的预测器契约。"""
 
 from typing import Mapping, Protocol, Sequence
 
@@ -10,9 +10,9 @@ from .features import FeatureValue
 
 class DurationPredictor(Protocol):
     def fit(self, samples: Sequence[LabeledSample]) -> "DurationPredictor":
-        """Fit the predictor from completed-request samples."""
+        """使用已完成请求样本拟合预测器。"""
         ...
 
     def predict(self, features: Mapping[str, FeatureValue]) -> DurationPrediction:
-        """Predict resident-model render duration quantiles."""
+        """预测驻留模型的渲染耗时分位数。"""
         ...

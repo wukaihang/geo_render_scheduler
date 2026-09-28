@@ -55,7 +55,7 @@ def test_generated_arrivals_are_non_decreasing_and_ids_are_unique() -> None:
 
 
 def test_synthetic_config_rejects_non_finite_model_or_gpu_values() -> None:
-    with pytest.raises(ValidationError, match="finite positive"):
+    with pytest.raises(ValidationError, match="有限正数"):
         SyntheticTraceConfig(
             seed=1,
             request_count=2,

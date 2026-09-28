@@ -1,4 +1,4 @@
-"""History-only duration prediction baselines."""
+"""仅使用历史信息的耗时预测基线。"""
 
 from __future__ import annotations
 
@@ -19,9 +19,9 @@ def _identity(features: Mapping[str, FeatureValue]) -> Tuple[str, str]:
     gpu_id = features.get("gpu_id")
     model_id = features.get("model_id")
     if not isinstance(gpu_id, str) or not gpu_id:
-        raise ValidationError("features['gpu_id'] must be a non-empty string")
+        raise ValidationError("features['gpu_id'] 必须是非空字符串")
     if not isinstance(model_id, str) or not model_id:
-        raise ValidationError("features['model_id'] must be a non-empty string")
+        raise ValidationError("features['model_id'] 必须是非空字符串")
     return gpu_id, model_id
 
 
@@ -39,7 +39,7 @@ class GlobalMeanPredictor:
 
     def fit(self, samples: Sequence[LabeledSample]) -> "GlobalMeanPredictor":
         if not samples:
-            raise ValidationError("samples must not be empty")
+            raise ValidationError("samples 不得为空")
         by_gpu_model: DefaultDict[Tuple[str, str], list[float]] = defaultdict(list)
         by_gpu: DefaultDict[str, list[float]] = defaultdict(list)
         global_values = []
@@ -60,7 +60,7 @@ class GlobalMeanPredictor:
 
     def predict(self, features: Mapping[str, FeatureValue]) -> DurationPrediction:
         if self._global is None:
-            raise ModelNotFittedError("GlobalMeanPredictor must be fitted before predict")
+            raise ModelNotFittedError("GlobalMeanPredictor 必须先拟合再执行预测")
         gpu_id, model_id = _identity(features)
         return self._by_gpu_model.get(
             (gpu_id, model_id), self._by_gpu.get(gpu_id, self._global)
@@ -77,7 +77,7 @@ class EWMAPredictor:
 
     def fit(self, samples: Sequence[LabeledSample]) -> "EWMAPredictor":
         if not samples:
-            raise ValidationError("samples must not be empty")
+            raise ValidationError("samples 不得为空")
         for sample in samples:
             self.observe(sample.gpu_id, sample.model_id, sample.target_ms)
         self._fitted = True
@@ -88,7 +88,7 @@ class EWMAPredictor:
 
     def predict(self, features: Mapping[str, FeatureValue]) -> DurationPrediction:
         if not self._fitted:
-            raise ModelNotFittedError("EWMAPredictor must be fitted before predict")
+            raise ModelNotFittedError("EWMAPredictor 必须先拟合再执行预测")
         gpu_id, model_id = _identity(features)
         return self.stats.estimate(gpu_id, model_id)
 

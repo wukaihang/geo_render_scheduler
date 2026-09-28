@@ -1,4 +1,4 @@
-"""Hardware adapter contracts."""
+"""硬件适配器契约。"""
 
 from .interface import DeviceStateProvider, Renderer
 from .unavailable import UnavailableDeviceStateProvider, UnavailableRenderer

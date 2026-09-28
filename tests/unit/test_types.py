@@ -75,7 +75,7 @@ def test_manifest_validates_shape_bounds_and_checksum() -> None:
 
 
 def test_manifest_rejects_non_integer_dimensions() -> None:
-    with pytest.raises(ValidationError, match="positive integers"):
+    with pytest.raises(ValidationError, match="正整数"):
         ModelManifest(
             model_id="model-a",
             dimensions=(128, 128.5, 128),

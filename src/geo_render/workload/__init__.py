@@ -1,4 +1,4 @@
-"""Deterministic workload generation, persistence, and replay."""
+"""确定性工作负载的生成、持久化与回放。"""
 
 from .replay import CompletedRequest, ReplayDecision, ReplayEngine, ReplayResult
 from .synthetic import SyntheticTraceConfig, generate_synthetic_trace

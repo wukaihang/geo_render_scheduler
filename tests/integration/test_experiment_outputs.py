@@ -59,7 +59,7 @@ def test_run_directory_rejects_overwrite(tmp_path: Path) -> None:
     config = make_config(request_count=2)
     trace = generate_synthetic_trace(config)
     result = make_engine().run(trace, RoundRobinPolicy())
-    with pytest.raises(ValidationError, match="already exists"):
+    with pytest.raises(ValidationError, match="已存在"):
         write_run_directory(output, {"seed": config.seed}, trace, result)
 
 

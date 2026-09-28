@@ -1,4 +1,4 @@
-"""Deterministic request-level discrete-event replay."""
+"""确定性的请求级离散事件回放。"""
 
 from __future__ import annotations
 
@@ -83,7 +83,7 @@ class ReplayEngine:
     ) -> None:
         self.devices = tuple(sorted(devices, key=lambda device: device.gpu_id))
         if not self.devices:
-            raise ValidationError("replay requires at least one device")
+            raise ValidationError("回放至少需要一个设备")
         self.manifests = MappingProxyType(dict(manifests))
         self.predicted_readback_ms_by_gpu = MappingProxyType(
             dict(predicted_readback_ms_by_gpu)
@@ -91,9 +91,9 @@ class ReplayEngine:
         if set(self.predicted_readback_ms_by_gpu) != {
             device.gpu_id for device in self.devices
         }:
-            raise ValidationError("readback prediction keys must match replay devices")
+            raise ValidationError("回读预测键必须与回放设备一致")
         if not math.isfinite(predicted_encode_ms) or predicted_encode_ms < 0:
-            raise ValidationError("predicted_encode_ms must be finite and non-negative")
+            raise ValidationError("predicted_encode_ms 必须有限且非负")
         self.predicted_encode_ms = predicted_encode_ms
         self.default_history_ms = default_history_ms
         self.history_alpha = history_alpha
@@ -101,22 +101,22 @@ class ReplayEngine:
 
     def _validate_trace(self, trace: Tuple[TraceRecord, ...]) -> None:
         if not trace:
-            raise ValidationError("replay trace must not be empty")
+            raise ValidationError("回放轨迹不得为空")
         request_ids = [record.request.request_id for record in trace]
         if len(request_ids) != len(set(request_ids)):
-            raise ValidationError("replay trace request IDs must be unique")
+            raise ValidationError("回放轨迹中的请求 ID 必须唯一")
         arrivals = [record.request.arrival_ms for record in trace]
         if arrivals != sorted(arrivals):
-            raise ValidationError("replay trace must be ordered by arrival_ms")
+            raise ValidationError("回放轨迹必须按 arrival_ms 排序")
         gpu_ids = {device.gpu_id for device in self.devices}
         for record in trace:
             if set(record.actual_render_ms_by_gpu) != gpu_ids:
-                raise ValidationError("trace render GPU IDs must match replay devices")
+                raise ValidationError("轨迹渲染 GPU ID 必须与回放设备一致")
             if set(record.actual_readback_ms_by_gpu) != gpu_ids:
-                raise ValidationError("trace readback GPU IDs must match replay devices")
+                raise ValidationError("轨迹回读 GPU ID 必须与回放设备一致")
             if record.request.model_id not in self.manifests:
                 raise ValidationError(
-                    f"missing manifest for model_id {record.request.model_id!r}"
+                    f"缺少 model_id {record.request.model_id!r} 对应的 manifest"
                 )
 
     def run(
@@ -126,7 +126,7 @@ class ReplayEngine:
         self._validate_trace(records)
         sources = {record.source for record in records}
         if len(sources) != 1:
-            raise ValidationError("one replay cannot mix measured and synthetic sources")
+            raise ValidationError("一次回放不能混用实测与模拟来源")
         source = next(iter(sources))
         by_id = {record.request.request_id: record for record in records}
         cluster = ClusterState(self.devices)
@@ -195,7 +195,7 @@ class ReplayEngine:
                 )
                 decision = policy.choose(request, context)
                 if decision.request_id != request_id:
-                    raise ValidationError("policy returned a decision for another request")
+                    raise ValidationError("策略返回了其他请求的决策")
                 selected_cost = decision.costs[decision.gpu_id]
                 queued = QueuedRequest(
                     request=request,
@@ -223,7 +223,7 @@ class ReplayEngine:
                 continue
 
             if event_type != "completion" or event_gpu_id is None:
-                raise ValidationError(f"unknown replay event {event_type!r}")
+                raise ValidationError(f"未知回放事件 {event_type!r}")
             worker = cluster.worker(event_gpu_id)
             queued = worker.complete(request_id, now_ms)
             start_ms = start_by_request.pop(request_id)
@@ -263,7 +263,7 @@ class ReplayEngine:
             start_next(event_gpu_id, now_ms)
 
         if len(completed) != len(records):
-            raise RuntimeError("replay ended without completing every request")
+            raise RuntimeError("回放结束时仍有请求未完成")
         completed.sort(key=lambda row: (row.finish_ms, row.request_id))
         return ReplayResult(
             policy=policy.name,

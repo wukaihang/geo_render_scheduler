@@ -1,3 +1,3 @@
-"""Innovation-one research implementation for geological volume rendering."""
+"""三维地质体绘制创新点一的研究实现。"""
 
 __version__ = "0.1.0"

@@ -1,4 +1,4 @@
-"""Command-line interface for innovation-one data, training, and comparisons."""
+"""创新点一的数据生成、模型训练与策略比较命令行接口。"""
 
 from __future__ import annotations
 
@@ -37,37 +37,78 @@ from geo_render.workload.synthetic import generate_synthetic_trace
 from geo_render.workload.trace import read_trace_csv, trace_sha256, write_trace_csv
 
 
+class ChineseArgumentParser(argparse.ArgumentParser):
+    """使用中文标准标题与帮助入口的参数解析器。"""
+
+    def __init__(self, *args, **kwargs) -> None:
+        kwargs["add_help"] = False
+        super().__init__(*args, **kwargs)
+        self._positionals.title = "位置参数"
+        self._optionals.title = "选项"
+        self.add_argument(
+            "-h", "--help", action="help", help="显示帮助信息并退出"
+        )
+
+    def format_usage(self) -> str:
+        return super().format_usage().replace("usage:", "用法：", 1)
+
+    def format_help(self) -> str:
+        return super().format_help().replace("usage:", "用法：", 1)
+
+    def error(self, message: str) -> None:
+        localized = message
+        for english, chinese in (
+            ("the following arguments are required:", "缺少以下必需参数："),
+            ("unrecognized arguments:", "无法识别的参数："),
+            ("invalid int value:", "无效的整数值："),
+            ("invalid float value:", "无效的浮点数值："),
+            ("expected one argument", "需要一个参数值"),
+            ("invalid choice:", "无效选择："),
+            ("choose from", "可选值为"),
+            ("argument ", "参数 "),
+        ):
+            localized = localized.replace(english, chinese)
+        self.print_usage(sys.stderr)
+        self.exit(2, f"{self.prog}：错误：{localized}\n")
+
+
 def _add_config(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--config", type=Path, required=True, help="实验配置文件路径")
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = ChineseArgumentParser(
         prog="geo-render",
-        description="Innovation-one render duration prediction and EFT experiments",
+        description="创新点一：渲染耗时预测与 EFT 调度实验",
     )
-    commands = parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(
+        dest="command",
+        required=True,
+        title="命令",
+        metavar="命令",
+        parser_class=ChineseArgumentParser,
+    )
 
-    generate = commands.add_parser("generate-trace", help="generate a frozen trace")
+    generate = commands.add_parser("generate-trace", help="生成冻结的请求轨迹")
     _add_config(generate)
-    generate.add_argument("--output", type=Path, required=True)
-    generate.add_argument("--requests", type=int)
-    generate.add_argument("--seed", type=int)
+    generate.add_argument("--output", type=Path, required=True, help="轨迹输出路径")
+    generate.add_argument("--requests", type=int, help="请求数量")
+    generate.add_argument("--seed", type=int, help="随机种子")
 
-    train = commands.add_parser("train", help="train and evaluate all predictors")
+    train = commands.add_parser("train", help="训练并评价全部预测器")
     _add_config(train)
-    train.add_argument("--trace", type=Path, required=True)
-    train.add_argument("--output", type=Path, required=True)
+    train.add_argument("--trace", type=Path, required=True, help="画像轨迹 CSV 路径")
+    train.add_argument("--output", type=Path, required=True, help="模型输出目录")
 
-    compare = commands.add_parser("compare", help="compare all six schedulers")
+    compare = commands.add_parser("compare", help="比较全部六种调度策略")
     _add_config(compare)
-    compare.add_argument("--trace", type=Path)
-    compare.add_argument("--output", type=Path, required=True)
-    compare.add_argument("--requests", type=int)
-    compare.add_argument("--seed", type=int)
+    compare.add_argument("--trace", type=Path, help="可选的冻结轨迹 CSV 路径")
+    compare.add_argument("--output", type=Path, required=True, help="比较结果输出目录")
+    compare.add_argument("--requests", type=int, help="生成轨迹时的请求数量")
+    compare.add_argument("--seed", type=int, help="生成轨迹时的随机种子")
 
     commands.add_parser(
-        "check-hardware", help="verify that a real EGL/NVML adapter is available"
+        "check-hardware", help="检查真实 EGL/NVML 适配器是否可用"
     )
     return parser
 
@@ -217,12 +258,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return _compare(args)
         if args.command == "check-hardware":
             return _check_hardware()
-        parser.error(f"unknown command {args.command!r}")
+        parser.error(f"未知命令 {args.command!r}")
     except HardwareBackendUnavailable as error:
-        print(f"hardware backend unavailable: {error}", file=sys.stderr)
+        print(f"硬件后端不可用：{error}", file=sys.stderr)
         return 2
     except (GeoRenderError, OSError, KeyError, TypeError, ValueError) as error:
-        print(f"error: {error}", file=sys.stderr)
+        print(f"错误：{error}", file=sys.stderr)
         return 2
     return 2
 

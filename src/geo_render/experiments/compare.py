@@ -1,4 +1,4 @@
-"""Run multiple policies against exactly one frozen trace."""
+"""在同一份冻结轨迹上运行多种策略。"""
 
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ def compare_policies(
 ) -> dict:
     output_dir = Path(output_dir)
     if output_dir.exists():
-        raise ValidationError(f"comparison output directory already exists: {output_dir}")
+        raise ValidationError(f"比较结果输出目录已存在：{output_dir}")
     records = tuple(trace)
     policy_list = tuple(policies)
     if not records or not policy_list:
-        raise ValidationError("comparison requires a non-empty trace and policies")
+        raise ValidationError("策略比较需要非空轨迹和策略集合")
     names = [policy.name for policy in policy_list]
     if len(names) != len(set(names)):
-        raise ValidationError("comparison policy names must be unique")
+        raise ValidationError("参与比较的策略名称必须唯一")
     output_dir.mkdir(parents=True)
     summaries = {}
     failures = {}

@@ -1,4 +1,4 @@
-"""Content- and device-aware scikit-learn duration predictors."""
+"""内容与设备感知的 scikit-learn 耗时预测器。"""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from .features import FeatureValue
 
 def _rows(samples: Sequence[LabeledSample]):
     if not samples:
-        raise ValidationError("samples must not be empty")
+        raise ValidationError("samples 不得为空")
     return [dict(sample.features) for sample in samples], np.asarray(
         [sample.target_ms for sample in samples], dtype=float
     )
@@ -28,9 +28,9 @@ def _rows(samples: Sequence[LabeledSample]):
 class RidgeDurationPredictor:
     def __init__(self, alpha: float = 1.0, floor_ms: float = 0.001) -> None:
         if alpha < 0 or not math.isfinite(alpha):
-            raise ValidationError("alpha must be finite and non-negative")
+            raise ValidationError("alpha 必须有限且非负")
         if floor_ms <= 0 or not math.isfinite(floor_ms):
-            raise ValidationError("floor_ms must be finite and positive")
+            raise ValidationError("floor_ms 必须是有限正数")
         self.alpha = alpha
         self.floor_ms = floor_ms
         self.vectorizer = DictVectorizer(sparse=False)
@@ -54,7 +54,7 @@ class RidgeDurationPredictor:
 
     def predict(self, features: Mapping[str, FeatureValue]) -> DurationPrediction:
         if self.residual_p95_ms is None:
-            raise ModelNotFittedError("RidgeDurationPredictor must be fitted before predict")
+            raise ModelNotFittedError("RidgeDurationPredictor 必须先拟合再执行预测")
         raw = float(self.model.predict(self.vectorizer.transform([dict(features)]))[0])
         p50 = max(self.floor_ms, raw)
         return DurationPrediction(
@@ -82,11 +82,11 @@ class MeanGBDTPredictor:
         floor_ms: float = 0.001,
     ) -> None:
         if n_estimators <= 0 or max_depth <= 0:
-            raise ValidationError("n_estimators and max_depth must be positive")
+            raise ValidationError("n_estimators 和 max_depth 必须为正数")
         if learning_rate <= 0 or not math.isfinite(learning_rate):
-            raise ValidationError("learning_rate must be finite and positive")
+            raise ValidationError("learning_rate 必须是有限正数")
         if floor_ms <= 0 or not math.isfinite(floor_ms):
-            raise ValidationError("floor_ms must be finite and positive")
+            raise ValidationError("floor_ms 必须是有限正数")
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.learning_rate = learning_rate
@@ -120,7 +120,7 @@ class MeanGBDTPredictor:
 
     def predict(self, features: Mapping[str, FeatureValue]) -> DurationPrediction:
         if self.residual_p95_ms is None:
-            raise ModelNotFittedError("MeanGBDTPredictor must be fitted before predict")
+            raise ModelNotFittedError("MeanGBDTPredictor 必须先拟合再执行预测")
         raw = float(self.model.predict(self.vectorizer.transform([dict(features)]))[0])
         p50 = max(self.floor_ms, raw)
         return DurationPrediction(
@@ -151,11 +151,11 @@ class QuantileGBDTPredictor:
         floor_ms: float = 0.001,
     ) -> None:
         if n_estimators <= 0 or max_depth <= 0:
-            raise ValidationError("n_estimators and max_depth must be positive")
+            raise ValidationError("n_estimators 和 max_depth 必须为正数")
         if learning_rate <= 0 or not math.isfinite(learning_rate):
-            raise ValidationError("learning_rate must be finite and positive")
+            raise ValidationError("learning_rate 必须是有限正数")
         if floor_ms <= 0 or not math.isfinite(floor_ms):
-            raise ValidationError("floor_ms must be finite and positive")
+            raise ValidationError("floor_ms 必须是有限正数")
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.learning_rate = learning_rate
@@ -184,7 +184,7 @@ class QuantileGBDTPredictor:
     def predict(self, features: Mapping[str, FeatureValue]) -> DurationPrediction:
         if not self._fitted:
             raise ModelNotFittedError(
-                "QuantileGBDTPredictor must be fitted before predict"
+                "QuantileGBDTPredictor 必须先拟合再执行预测"
             )
         matrix = self.vectorizer.transform([dict(features)])
         p50 = max(self.floor_ms, float(self.p50_model.predict(matrix)[0]))

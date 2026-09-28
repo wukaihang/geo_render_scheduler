@@ -35,13 +35,13 @@ def make_queued(request_id: str, arrival_ms: float = 0.0) -> QueuedRequest:
 
 def test_worker_state_rejects_invalid_transitions() -> None:
     worker = WorkerState(make_device("gpu-0"))
-    with pytest.raises(StateTransitionError, match="no running request"):
+    with pytest.raises(StateTransitionError, match="没有可完成的运行中请求"):
         worker.complete("missing", 10.0)
     worker.enqueue(make_queued("r1"))
     worker.start_next(0.0)
-    with pytest.raises(StateTransitionError, match="already running"):
+    with pytest.raises(StateTransitionError, match="已在运行请求"):
         worker.start_next(1.0)
-    with pytest.raises(StateTransitionError, match="does not match"):
+    with pytest.raises(StateTransitionError, match="不一致"):
         worker.complete("wrong", 25.0)
 
 
@@ -60,5 +60,5 @@ def test_worker_snapshot_tracks_running_remainder_and_queued_predictions() -> No
 def test_cluster_rejects_duplicate_request_ids_across_workers() -> None:
     cluster = ClusterState((make_device("gpu-0"), make_device("gpu-1")))
     cluster.worker("gpu-0").enqueue(make_queued("r1"))
-    with pytest.raises(StateTransitionError, match="duplicate request_id"):
+    with pytest.raises(StateTransitionError, match="request_id 重复"):
         cluster.enqueue("gpu-1", make_queued("r1"))

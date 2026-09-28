@@ -18,5 +18,5 @@ def test_prediction_metrics_cover_required_error_and_calibration_values() -> Non
 
 
 def test_prediction_metrics_reject_mismatched_lengths() -> None:
-    with pytest.raises(ValidationError, match="same non-zero length"):
+    with pytest.raises(ValidationError, match="相同的非零长度"):
         prediction_metrics([1.0], [1.0, 2.0], [2.0])

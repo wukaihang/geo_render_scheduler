@@ -1,4 +1,4 @@
-"""Scheduling contracts and immutable decision context."""
+"""调度契约与不可变决策上下文。"""
 
 from __future__ import annotations
 
@@ -28,25 +28,25 @@ class SchedulerContext:
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.now_ms) or self.now_ms < 0:
-            raise ValidationError("scheduler now_ms must be finite and non-negative")
+            raise ValidationError("调度器 now_ms 必须有限且非负")
         if not self.workers:
-            raise ValidationError("scheduler requires at least one worker")
+            raise ValidationError("调度器至少需要一个 worker")
         ordered = tuple(sorted(self.workers, key=lambda worker: worker.gpu_id))
         gpu_ids = [worker.gpu_id for worker in ordered]
         if len(set(gpu_ids)) != len(gpu_ids):
-            raise ValidationError("scheduler worker GPU IDs must be unique")
+            raise ValidationError("调度器的 worker GPU ID 必须唯一")
         manifests = dict(self.manifests)
         if not manifests:
-            raise ValidationError("scheduler manifests must not be empty")
+            raise ValidationError("调度器的 manifests 不得为空")
         readback = dict(self.predicted_readback_ms_by_gpu)
         if set(readback) != set(gpu_ids):
-            raise ValidationError("readback prediction keys must match worker GPU IDs")
+            raise ValidationError("回读预测键必须与 worker GPU ID 一致")
         if any(
             not math.isfinite(value) or value < 0 for value in readback.values()
         ):
-            raise ValidationError("readback predictions must be finite and non-negative")
+            raise ValidationError("回读预测值必须有限且非负")
         if not math.isfinite(self.predicted_encode_ms) or self.predicted_encode_ms < 0:
-            raise ValidationError("predicted_encode_ms must be finite and non-negative")
+            raise ValidationError("predicted_encode_ms 必须有限且非负")
         object.__setattr__(self, "workers", ordered)
         object.__setattr__(self, "manifests", MappingProxyType(manifests))
         object.__setattr__(
@@ -57,17 +57,17 @@ class SchedulerContext:
         for worker in self.workers:
             if worker.gpu_id == gpu_id:
                 return worker
-        raise ValidationError(f"unknown gpu_id {gpu_id!r}")
+        raise ValidationError(f"未知 gpu_id {gpu_id!r}")
 
 
 class SchedulerPolicy(Protocol):
     @property
     def name(self) -> str:
-        """Stable policy identifier written into experiment outputs."""
+        """写入实验输出的稳定策略标识符。"""
         ...
 
     def choose(
         self, request: RenderRequest, context: SchedulerContext
     ) -> ScheduleDecision:
-        """Choose exactly one worker without mutating cluster state."""
+        """在不修改集群状态的前提下选出一个 worker。"""
         ...

@@ -1,4 +1,4 @@
-"""Leakage-safe profile conversion, model training, evaluation, and persistence."""
+"""防泄漏的画像转换、模型训练、评价与持久化。"""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def samples_from_profile_trace(
 ) -> Tuple[LabeledSample, ...]:
     records = tuple(trace)
     if not records:
-        raise ValidationError("profile trace must not be empty")
+        raise ValidationError("画像轨迹不得为空")
     history = OnlineDurationStats(
         history_alpha, history_window_size, default_history_ms
     )
@@ -43,14 +43,14 @@ def samples_from_profile_trace(
             manifest = manifests[request.model_id]
         except KeyError as error:
             raise ValidationError(
-                f"missing manifest for profile model {request.model_id!r}"
+                f"缺少画像模型 {request.model_id!r} 的 manifest"
             ) from error
         for device in devices:
             try:
                 target_ms = record.actual_render_ms_by_gpu[device.gpu_id]
             except KeyError as error:
                 raise ValidationError(
-                    f"profile record lacks GPU {device.gpu_id!r}"
+                    f"画像记录缺少 GPU {device.gpu_id!r}"
                 ) from error
             history_prediction = history.estimate(device.gpu_id, request.model_id)
             features = extract_features(request, manifest, device, history_prediction)
@@ -117,7 +117,7 @@ def train_all_predictors(
     records = tuple(trace)
     output_dir = Path(output_dir)
     if output_dir.exists():
-        raise ValidationError(f"model output directory already exists: {output_dir}")
+        raise ValidationError(f"模型输出目录已存在：{output_dir}")
     samples = samples_from_profile_trace(
         records,
         manifests,

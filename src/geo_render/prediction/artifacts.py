@@ -1,4 +1,4 @@
-"""Versioned predictor artifact persistence."""
+"""带版本信息的预测器工件持久化。"""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def _validate_sha256(value: str) -> None:
     if len(value) != 64 or any(
         character not in "0123456789abcdefABCDEF" for character in value
     ):
-        raise ValidationError("training_sha256 must contain 64 hexadecimal characters")
+        raise ValidationError("training_sha256 必须包含 64 个十六进制字符")
 
 
 def save_artifact(path: Path, predictor: Any, training_sha256: str) -> Path:
@@ -53,15 +53,15 @@ def save_artifact(path: Path, predictor: Any, training_sha256: str) -> Path:
 def load_artifact(path: Path):
     envelope = joblib.load(Path(path))
     if not isinstance(envelope, Mapping):
-        raise ValidationError("artifact must contain a mapping envelope")
+        raise ValidationError("预测器工件必须包含映射封装")
     if envelope.get("schema_version") != ARTIFACT_SCHEMA_VERSION:
         raise ValidationError(
-            "artifact schema_version mismatch: "
-            f"expected {ARTIFACT_SCHEMA_VERSION!r}, got {envelope.get('schema_version')!r}"
+            "预测器工件 schema_version 不匹配："
+            f"期望 {ARTIFACT_SCHEMA_VERSION!r}，实际为 {envelope.get('schema_version')!r}"
         )
     if envelope.get("feature_schema_version") != FEATURE_SCHEMA_VERSION:
-        raise ValidationError("artifact feature_schema_version mismatch")
+        raise ValidationError("预测器工件的 feature_schema_version 不匹配")
     predictor = envelope.get("predictor")
     if predictor is None or not callable(getattr(predictor, "predict", None)):
-        raise ValidationError("artifact predictor is missing or invalid")
+        raise ValidationError("预测器工件缺少有效的 predictor")
     return predictor

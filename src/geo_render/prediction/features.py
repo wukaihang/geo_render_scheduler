@@ -1,4 +1,4 @@
-"""Pure external feature extraction for geological volume render requests."""
+"""为三维地质体渲染请求提取纯外部特征。"""
 
 from __future__ import annotations
 
@@ -72,17 +72,17 @@ FEATURE_GROUPS: Mapping[str, tuple[str, ...]] = MappingProxyType(
 def drop_feature_groups(
     features: Mapping[str, FeatureValue], excluded_groups: Iterable[str]
 ) -> Dict[str, FeatureValue]:
-    """Return a copy without complete named groups for controlled ablations."""
+    """返回移除指定完整特征组的副本，用于受控消融。"""
     groups = tuple(excluded_groups)
     unknown = sorted(set(groups) - set(FEATURE_GROUPS))
     if unknown:
-        raise ValidationError(f"unknown feature groups: {', '.join(unknown)}")
+        raise ValidationError(f"未知特征组：{', '.join(unknown)}")
     excluded_keys = {
         key for group in groups for key in FEATURE_GROUPS[group]
     }
     remaining = {key: value for key, value in features.items() if key not in excluded_keys}
     if not remaining:
-        raise ValidationError("feature ablation removed every feature")
+        raise ValidationError("特征消融移除了全部特征")
     return remaining
 
 
@@ -102,11 +102,11 @@ def extract_features(
     device: DeviceState,
     history: DurationPrediction,
 ) -> Dict[str, FeatureValue]:
-    """Build only externally observable features for one request/GPU pair."""
+    """只为一个请求与 GPU 组合构建外部可观测特征。"""
     if request.model_id != manifest.model_id:
         raise ValidationError(
-            "request.model_id must match manifest.model_id; "
-            f"got {request.model_id!r} and {manifest.model_id!r}"
+            "request.model_id 必须与 manifest.model_id 一致；"
+            f"实际为 {request.model_id!r} 和 {manifest.model_id!r}"
         )
 
     center = tuple(

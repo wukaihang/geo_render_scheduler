@@ -101,3 +101,36 @@ def test_hardware_check_fails_actionably() -> None:
     assert "Linux" in result.stderr
     assert "EGL" in result.stderr
     assert "NVML" in result.stderr
+
+
+def test_cli_parse_errors_are_chinese() -> None:
+    missing = run_cli("generate-trace")
+    assert missing.returncode == 2
+    assert "错误：" in missing.stderr
+    assert "缺少以下必需参数" in missing.stderr
+    assert "the following arguments are required" not in missing.stderr
+
+    unknown = run_cli(
+        "generate-trace",
+        "--config",
+        str(EXAMPLE_CONFIG),
+        "--output",
+        "trace.csv",
+        "--unknown",
+    )
+    assert unknown.returncode == 2
+    assert "无法识别的参数" in unknown.stderr
+    assert "unrecognized arguments" not in unknown.stderr
+
+    invalid_integer = run_cli(
+        "generate-trace",
+        "--config",
+        str(EXAMPLE_CONFIG),
+        "--output",
+        "trace.csv",
+        "--requests",
+        "不是整数",
+    )
+    assert invalid_integer.returncode == 2
+    assert "无效的整数值" in invalid_integer.stderr
+    assert "invalid int value" not in invalid_integer.stderr

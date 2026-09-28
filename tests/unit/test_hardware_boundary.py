@@ -14,5 +14,5 @@ def test_unavailable_renderer_never_fabricates_measurements() -> None:
 
 
 def test_unavailable_device_provider_never_fabricates_telemetry() -> None:
-    with pytest.raises(HardwareBackendUnavailable, match=r"NVML.*GPU binding"):
+    with pytest.raises(HardwareBackendUnavailable, match=r"NVML.*GPU 绑定"):
         UnavailableDeviceStateProvider().snapshot()

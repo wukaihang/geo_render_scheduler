@@ -1,25 +1,25 @@
-"""Project-specific exceptions with stable meanings."""
+"""含义稳定的项目专用异常。"""
 
 
 class GeoRenderError(Exception):
-    """Base class for project errors."""
+    """项目异常基类。"""
 
 
 class ValidationError(GeoRenderError, ValueError):
-    """Raised when a domain object contains an invalid field value."""
+    """领域对象包含非法字段值时抛出。"""
 
 
 class HardwareBackendUnavailable(GeoRenderError, RuntimeError):
-    """Raised when the real GPU rendering or telemetry adapter is unavailable."""
+    """真实 GPU 渲染或遥测适配器不可用时抛出。"""
 
 
 class ModelNotFittedError(GeoRenderError, RuntimeError):
-    """Raised when prediction is requested before fitting."""
+    """在模型拟合前请求预测时抛出。"""
 
 
 class StateTransitionError(GeoRenderError, RuntimeError):
-    """Raised for an invalid worker state-machine transition."""
+    """Worker 状态机发生非法转换时抛出。"""
 
 
 class OracleAccessError(GeoRenderError, RuntimeError):
-    """Raised when oracle information is requested outside offline replay."""
+    """在离线回放之外请求 Oracle 信息时抛出。"""

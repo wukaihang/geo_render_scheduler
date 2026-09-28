@@ -1,4 +1,4 @@
-"""Duration feature engineering and prediction."""
+"""耗时特征工程与预测。"""
 
 from .artifacts import load_artifact, save_artifact
 from .baselines import EWMAPredictor, GlobalMeanPredictor

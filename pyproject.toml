@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "geo-render-scheduler"
 version = "0.1.0"
-description = "Content-aware duration prediction and EFT scheduling for multi-GPU geological volume rendering"
+description = "面向多 GPU 三维地质体绘制的内容感知耗时预测与 EFT 调度"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [

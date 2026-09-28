@@ -1,4 +1,4 @@
-"""Experiment output and policy comparison orchestration."""
+"""实验输出与策略比较编排。"""
 
 from .compare import compare_policies
 from .config import load_config, replay_engine, synthetic_trace_config

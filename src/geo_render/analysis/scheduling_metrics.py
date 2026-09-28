@@ -1,4 +1,4 @@
-"""Tail latency, SLO, utilization, balance, and fairness metrics."""
+"""尾延迟、SLO、利用率、负载均衡与公平性指标。"""
 
 from __future__ import annotations
 
@@ -14,9 +14,9 @@ from geo_render.workload.replay import ReplayResult
 
 def jain_index(values: Sequence[float]) -> float:
     if not values:
-        raise ValidationError("Jain index requires at least one value")
+        raise ValidationError("Jain 指数至少需要一个值")
     if any(not math.isfinite(value) or value < 0 for value in values):
-        raise ValidationError("Jain index values must be finite and non-negative")
+        raise ValidationError("Jain 指数输入值必须有限且非负")
     squared_sum = sum(value * value for value in values)
     if squared_sum == 0:
         return 1.0
@@ -53,10 +53,10 @@ def _fairness(result: ReplayResult) -> Optional[Dict[str, object]]:
 
 def scheduling_metrics(result: ReplayResult) -> Dict[str, object]:
     if not result.completed:
-        raise ValidationError("scheduling metrics require completed requests")
+        raise ValidationError("计算调度指标至少需要一个已完成请求")
     observation_ms = result.last_finish_ms - result.first_arrival_ms
     if observation_ms <= 0:
-        raise ValidationError("replay observation window must be positive")
+        raise ValidationError("回放观察窗口必须为正数")
     slo_rows = [row for row in result.completed if row.slo_ms is not None]
     slo_violation_rate = (
         None

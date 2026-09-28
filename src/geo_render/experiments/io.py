@@ -1,4 +1,4 @@
-"""Atomic self-contained experiment result directories."""
+"""原子写入的自包含实验结果目录。"""
 
 from __future__ import annotations
 
@@ -130,7 +130,7 @@ def write_run_directory(
 ) -> Path:
     output_dir = Path(output_dir)
     if output_dir.exists():
-        raise ValidationError(f"output directory already exists: {output_dir}")
+        raise ValidationError(f"输出目录已存在：{output_dir}")
     records = tuple(trace)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(
@@ -159,7 +159,7 @@ def write_failed_run_directory(
 ) -> Path:
     output_dir = Path(output_dir)
     if output_dir.exists():
-        raise ValidationError(f"output directory already exists: {output_dir}")
+        raise ValidationError(f"输出目录已存在：{output_dir}")
     records = tuple(trace)
     output_dir.mkdir(parents=True)
     _write_json(output_dir / "config.json", dict(config))

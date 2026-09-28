@@ -1,4 +1,4 @@
-"""Strict JSON configuration conversion for synthetic verification runs."""
+"""用于模拟验证运行的严格 JSON 配置转换。"""
 
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ def load_config(path: Path) -> dict:
     try:
         value = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise ValidationError(f"cannot read JSON config {path}: {error}") from error
+        raise ValidationError(f"无法读取 JSON 配置 {path}：{error}") from error
     if not isinstance(value, dict):
-        raise ValidationError("top-level config must be a JSON object")
+        raise ValidationError("顶层配置必须是 JSON 对象")
     return value
 
 
@@ -29,7 +29,7 @@ def synthetic_trace_config(
 ) -> SyntheticTraceConfig:
     raw = config.get("trace")
     if not isinstance(raw, Mapping):
-        raise ValidationError("config.trace must be an object")
+        raise ValidationError("config.trace 必须是对象")
     return SyntheticTraceConfig(
         seed=int(config["seed"] if seed is None else seed),
         request_count=int(
@@ -56,7 +56,7 @@ def synthetic_trace_config(
 def devices_from_config(config: Mapping[str, object]) -> Tuple[DeviceState, ...]:
     raw_devices = config.get("devices")
     if not isinstance(raw_devices, list) or not raw_devices:
-        raise ValidationError("config.devices must be a non-empty array")
+        raise ValidationError("config.devices 必须是非空数组")
     return tuple(
         DeviceState(
             gpu_id=str(raw["gpu_id"]),
@@ -88,7 +88,7 @@ def manifests_from_config(
 ) -> Mapping[str, ModelManifest]:
     raw_manifests = config.get("manifests")
     if not isinstance(raw_manifests, list) or not raw_manifests:
-        raise ValidationError("config.manifests must be a non-empty array")
+        raise ValidationError("config.manifests 必须是非空数组")
     manifests = {}
     for raw in raw_manifests:
         manifest = ModelManifest(
@@ -101,7 +101,7 @@ def manifests_from_config(
             sha256=str(raw["sha256"]),
         )
         if manifest.model_id in manifests:
-            raise ValidationError(f"duplicate manifest {manifest.model_id!r}")
+            raise ValidationError(f"manifest 重复：{manifest.model_id!r}")
         manifests[manifest.model_id] = manifest
     return manifests
 
@@ -109,7 +109,7 @@ def manifests_from_config(
 def replay_engine(config: Mapping[str, object]) -> ReplayEngine:
     raw = config.get("prediction")
     if not isinstance(raw, Mapping):
-        raise ValidationError("config.prediction must be an object")
+        raise ValidationError("config.prediction 必须是对象")
     return ReplayEngine(
         devices=devices_from_config(config),
         manifests=manifests_from_config(config),

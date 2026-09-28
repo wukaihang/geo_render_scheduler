@@ -1,4 +1,4 @@
-"""Seeded open-arrival synthetic traces for implementation verification."""
+"""用于实现验证的固定种子开放到达模拟轨迹。"""
 
 from __future__ import annotations
 
@@ -28,37 +28,37 @@ class SyntheticTraceConfig:
 
     def __post_init__(self) -> None:
         if self.request_count <= 0:
-            raise ValidationError("request_count must be positive")
+            raise ValidationError("request_count 必须为正数")
         if self.user_count <= 0 or self.trajectory_count <= 0:
-            raise ValidationError("user_count and trajectory_count must be positive")
+            raise ValidationError("user_count 和 trajectory_count 必须为正数")
         if not math.isfinite(self.arrival_rate_per_second) or self.arrival_rate_per_second <= 0:
-            raise ValidationError("arrival_rate_per_second must be finite and positive")
+            raise ValidationError("arrival_rate_per_second 必须是有限正数")
         models = dict(self.model_base_render_ms)
         speeds = dict(self.gpu_speed)
         if not models or any(
             not math.isfinite(value) or value <= 0 for value in models.values()
         ):
             raise ValidationError(
-                "model_base_render_ms must contain finite positive values"
+                "model_base_render_ms 必须包含有限正数"
             )
         if not speeds or any(
             not math.isfinite(value) or value <= 0 for value in speeds.values()
         ):
-            raise ValidationError("gpu_speed must contain finite positive values")
+            raise ValidationError("gpu_speed 必须包含有限正数")
         if not self.output_sizes or any(
             width <= 0 or height <= 0 for width, height in self.output_sizes
         ):
-            raise ValidationError("output_sizes must contain positive dimensions")
+            raise ValidationError("output_sizes 必须包含正数尺寸")
         if not self.sample_steps or any(value <= 0 for value in self.sample_steps):
-            raise ValidationError("sample_steps must contain positive values")
+            raise ValidationError("sample_steps 必须包含正数")
         if not math.isfinite(self.slo_ms) or self.slo_ms <= 0:
-            raise ValidationError("slo_ms must be finite and positive")
+            raise ValidationError("slo_ms 必须是有限正数")
         object.__setattr__(self, "model_base_render_ms", MappingProxyType(models))
         object.__setattr__(self, "gpu_speed", MappingProxyType(speeds))
 
 
 def generate_synthetic_trace(config: SyntheticTraceConfig) -> Tuple[TraceRecord, ...]:
-    """Generate synthetic measurements that are always labeled as synthetic."""
+    """生成始终标记为 synthetic 的模拟测量值。"""
     rng = random.Random(config.seed)
     arrival_ms = 0.0
     model_ids = tuple(sorted(config.model_base_render_ms))

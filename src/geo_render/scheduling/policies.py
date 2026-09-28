@@ -1,4 +1,4 @@
-"""Round-robin, queue, weighted, predicted-EFT, and offline-oracle policies."""
+"""轮询、队列、静态加权、预测 EFT 与离线 Oracle 策略。"""
 
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ class RoundRobinPolicy:
             request_id=request.request_id,
             gpu_id=selected,
             policy=self.name,
-            reason=f"stable_cycle_index={self._next_index - 1}",
+            reason=f"稳定轮询索引={self._next_index - 1}",
             costs=_history_costs(request, context),
         )
 
@@ -114,7 +114,7 @@ class LeastQueuePolicy:
             request_id=request.request_id,
             gpu_id=selected_worker.gpu_id,
             policy=self.name,
-            reason=f"outstanding_requests={selected_length}",
+            reason=f"未完成请求数={selected_length}",
             costs=_history_costs(request, context),
         )
 
@@ -127,7 +127,7 @@ class StaticWeightedPolicy:
         if not copied or any(
             not math.isfinite(value) or value <= 0 for value in copied.values()
         ):
-            raise ValidationError("service_rates must contain positive finite values")
+            raise ValidationError("service_rates 必须包含有限正数")
         self.service_rates = MappingProxyType(copied)
 
     def choose(
@@ -135,7 +135,7 @@ class StaticWeightedPolicy:
     ) -> ScheduleDecision:
         context_ids = {worker.gpu_id for worker in context.workers}
         if set(self.service_rates) != context_ids:
-            raise ValidationError("service_rates keys must match scheduler workers")
+            raise ValidationError("service_rates 的键必须与调度器 worker 一致")
         scores = {
             worker.gpu_id: (
                 (1 if worker.current_request_id is not None else 0)
@@ -150,7 +150,7 @@ class StaticWeightedPolicy:
             request_id=request.request_id,
             gpu_id=selected,
             policy=self.name,
-            reason=f"normalized_request_load={scores[selected]:.9g}",
+            reason=f"归一化请求负载={scores[selected]:.9g}",
             costs=_history_costs(request, context),
         )
 
@@ -160,7 +160,7 @@ class EFTPolicy:
         self, predictor: DurationPredictor, policy_name: str = "feature-eft"
     ) -> None:
         if not policy_name:
-            raise ValidationError("policy_name must be non-empty")
+            raise ValidationError("policy_name 不得为空")
         self.predictor = predictor
         self.name = policy_name
 
@@ -171,7 +171,7 @@ class EFTPolicy:
             manifest = context.manifests[request.model_id]
         except KeyError as error:
             raise ValidationError(
-                f"missing manifest for model_id {request.model_id!r}"
+                f"缺少 model_id {request.model_id!r} 对应的 manifest"
             ) from error
         costs = {}
         for worker in context.workers:
@@ -184,7 +184,7 @@ class EFTPolicy:
             request_id=request.request_id,
             gpu_id=selected,
             policy=self.name,
-            reason=f"minimum_ect_ms={costs[selected].total_ms:.9g}",
+            reason=f"最小预计完成时间毫秒数={costs[selected].total_ms:.9g}",
             costs=costs,
         )
 
@@ -209,7 +209,7 @@ class OracleEFTPolicy:
     ) -> None:
         if token is not _ORACLE_TOKEN or trace is None:
             raise OracleAccessError(
-                "OracleEFTPolicy is available only through for_offline_replay()"
+                "OracleEFTPolicy 只能通过 for_offline_replay() 创建"
             )
         render = {}
         readback = {}
@@ -217,7 +217,7 @@ class OracleEFTPolicy:
         for record in trace:
             request_id = record.request.request_id
             if request_id in render:
-                raise OracleAccessError(f"duplicate oracle request {request_id!r}")
+                raise OracleAccessError(f"Oracle 请求重复：{request_id!r}")
             render[request_id] = MappingProxyType(
                 dict(record.actual_render_ms_by_gpu)
             )
@@ -226,7 +226,7 @@ class OracleEFTPolicy:
             )
             encode[request_id] = record.actual_encode_ms
         if not render:
-            raise OracleAccessError("offline oracle trace must not be empty")
+            raise OracleAccessError("离线 Oracle 轨迹不得为空")
         self._actual_render_by_request = MappingProxyType(render)
         self._actual_readback_by_request = MappingProxyType(readback)
         self._actual_encode_by_request = MappingProxyType(encode)
@@ -250,7 +250,7 @@ class OracleEFTPolicy:
             actual_encode = self._actual_encode_by_request[request.request_id]
         except KeyError as error:
             raise OracleAccessError(
-                f"oracle has no offline durations for request {request.request_id!r}"
+                f"Oracle 没有请求 {request.request_id!r} 的离线耗时"
             ) from error
         costs = {}
         for worker in context.workers:
@@ -259,8 +259,8 @@ class OracleEFTPolicy:
                 readback = actual_readback[worker.gpu_id]
             except KeyError as error:
                 raise OracleAccessError(
-                    f"oracle request {request.request_id!r} has no duration for "
-                    f"GPU {worker.gpu_id!r}"
+                    f"Oracle 请求 {request.request_id!r} 没有 GPU "
+                    f"{worker.gpu_id!r} 的耗时"
                 ) from error
             prediction = DurationPrediction(duration, duration, "offline-oracle")
             costs[worker.gpu_id] = _cost(
@@ -276,6 +276,6 @@ class OracleEFTPolicy:
             request_id=request.request_id,
             gpu_id=selected,
             policy=self.name,
-            reason=f"minimum_oracle_ect_ms={costs[selected].total_ms:.9g}",
+            reason=f"Oracle 最小预计完成时间毫秒数={costs[selected].total_ms:.9g}",
             costs=costs,
         )

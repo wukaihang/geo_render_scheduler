@@ -1,4 +1,4 @@
-"""Immutable cross-module data contracts for innovation one."""
+"""创新点一使用的不可变跨模块数据契约。"""
 
 from __future__ import annotations
 
@@ -16,29 +16,29 @@ Bounds6 = Tuple[float, float, float, float, float, float]
 
 def _require_text(path: str, value: str) -> None:
     if not isinstance(value, str) or not value.strip():
-        raise ValidationError(f"{path} must be a non-empty string; got {value!r}")
+        raise ValidationError(f"{path} 必须是非空字符串；实际为 {value!r}")
 
 
 def _require_finite(path: str, value: float) -> None:
     if not math.isfinite(value):
-        raise ValidationError(f"{path} must be finite; got {value!r}")
+        raise ValidationError(f"{path} 必须是有限数；实际为 {value!r}")
 
 
 def _require_positive(path: str, value: float) -> None:
     _require_finite(path, value)
     if value <= 0:
-        raise ValidationError(f"{path} must be positive; got {value!r}")
+        raise ValidationError(f"{path} 必须为正数；实际为 {value!r}")
 
 
 def _require_non_negative(path: str, value: float) -> None:
     _require_finite(path, value)
     if value < 0:
-        raise ValidationError(f"{path} must be non-negative; got {value!r}")
+        raise ValidationError(f"{path} 必须为非负数；实际为 {value!r}")
 
 
 def _validate_vector(path: str, value: Vector3) -> None:
     if len(value) != 3:
-        raise ValidationError(f"{path} must contain three values; got {value!r}")
+        raise ValidationError(f"{path} 必须包含三个值；实际为 {value!r}")
     for index, coordinate in enumerate(value):
         _require_finite(f"{path}[{index}]", coordinate)
 
@@ -50,7 +50,7 @@ def _freeze_float_mapping(path: str, values: Mapping[str, float]) -> Mapping[str
         _require_non_negative(f"{path}[{key!r}]", value)
         frozen[key] = float(value)
     if not frozen:
-        raise ValidationError(f"{path} must not be empty")
+        raise ValidationError(f"{path} 不得为空")
     return MappingProxyType(frozen)
 
 
@@ -67,16 +67,16 @@ class Camera:
         _validate_vector("camera.focal_point", self.focal_point)
         _validate_vector("camera.view_up", self.view_up)
         if self.position == self.focal_point:
-            raise ValidationError("camera.position must differ from camera.focal_point")
+            raise ValidationError("camera.position 必须与 camera.focal_point 不同")
         if math.sqrt(sum(value * value for value in self.view_up)) == 0:
-            raise ValidationError("camera.view_up must be non-zero")
+            raise ValidationError("camera.view_up 不得为零向量")
         if self.projection not in {"perspective", "parallel"}:
             raise ValidationError(
-                f"camera.projection must be 'perspective' or 'parallel'; got {self.projection!r}"
+                f"camera.projection 必须是 'perspective' 或 'parallel'；实际为 {self.projection!r}"
             )
         _require_positive("camera.view_angle_deg", self.view_angle_deg)
         if self.view_angle_deg >= 180:
-            raise ValidationError("camera.view_angle_deg must be less than 180")
+            raise ValidationError("camera.view_angle_deg 必须小于 180")
 
 
 @dataclass(frozen=True)
@@ -109,15 +109,15 @@ class RenderRequest:
         _require_finite("clip_fraction", self.clip_fraction)
         if not 0 <= self.clip_fraction <= 1:
             raise ValidationError(
-                f"clip_fraction must be in [0, 1]; got {self.clip_fraction!r}"
+                f"clip_fraction 必须位于 [0, 1]；实际为 {self.clip_fraction!r}"
             )
         if self.output_width <= 0:
             raise ValidationError(
-                f"output_width must be positive; got {self.output_width!r}"
+                f"output_width 必须为正整数；实际为 {self.output_width!r}"
             )
         if self.output_height <= 0:
             raise ValidationError(
-                f"output_height must be positive; got {self.output_height!r}"
+                f"output_height 必须为正整数；实际为 {self.output_height!r}"
             )
         _require_positive("sample_step", self.sample_step)
         _require_non_negative("arrival_ms", self.arrival_ms)
@@ -142,31 +142,31 @@ class ModelManifest:
             for value in self.dimensions
         ):
             raise ValidationError(
-                f"dimensions must contain three positive integers; got {self.dimensions!r}"
+                f"dimensions 必须包含三个正整数；实际为 {self.dimensions!r}"
             )
         _require_finite("active_voxel_fraction", self.active_voxel_fraction)
         if not 0 <= self.active_voxel_fraction <= 1:
             raise ValidationError(
-                "active_voxel_fraction must be in [0, 1]; "
-                f"got {self.active_voxel_fraction!r}"
+                "active_voxel_fraction 必须位于 [0, 1]；"
+                f"实际为 {self.active_voxel_fraction!r}"
             )
         if self.data_bytes <= 0:
-            raise ValidationError(f"data_bytes must be positive; got {self.data_bytes!r}")
+            raise ValidationError(f"data_bytes 必须为正整数；实际为 {self.data_bytes!r}")
         if self.layer_count <= 0:
-            raise ValidationError(f"layer_count must be positive; got {self.layer_count!r}")
+            raise ValidationError(f"layer_count 必须为正整数；实际为 {self.layer_count!r}")
         if len(self.bounds) != 6:
-            raise ValidationError(f"bounds must contain six values; got {self.bounds!r}")
+            raise ValidationError(f"bounds 必须包含六个值；实际为 {self.bounds!r}")
         for index, value in enumerate(self.bounds):
             _require_finite(f"bounds[{index}]", value)
         for lower, upper, axis in zip(self.bounds[::2], self.bounds[1::2], "xyz"):
             if lower >= upper:
                 raise ValidationError(
-                    f"bounds for axis {axis} must have lower < upper; got {(lower, upper)!r}"
+                    f"第 {axis} 轴的 bounds 必须满足下界小于上界；实际为 {(lower, upper)!r}"
                 )
         if len(self.sha256) != 64 or any(
             character not in "0123456789abcdefABCDEF" for character in self.sha256
         ):
-            raise ValidationError("sha256 must contain exactly 64 hexadecimal characters")
+            raise ValidationError("sha256 必须恰好包含 64 个十六进制字符")
 
 
 @dataclass(frozen=True)
@@ -185,13 +185,13 @@ class DeviceState:
         _require_text("gpu_id", self.gpu_id)
         _require_text("device.model", self.model)
         if self.memory_total_bytes <= 0:
-            raise ValidationError("memory_total_bytes must be positive")
+            raise ValidationError("memory_total_bytes 必须为正数")
         for path in ("utilization_pct", "memory_utilization_pct"):
             value = getattr(self, path)
             if value is not None:
                 _require_finite(path, value)
                 if not 0 <= value <= 100:
-                    raise ValidationError(f"{path} must be in [0, 100]; got {value!r}")
+                    raise ValidationError(f"{path} 必须位于 [0, 100]；实际为 {value!r}")
         for path in ("temperature_c", "power_w"):
             value = getattr(self, path)
             if value is not None:
@@ -211,7 +211,7 @@ class DurationPrediction:
         _require_positive("p95_ms", self.p95_ms)
         if self.p95_ms < self.p50_ms:
             raise ValidationError(
-                f"p95_ms must be greater than or equal to p50_ms; got {self.p95_ms!r}"
+                f"p95_ms 必须大于或等于 p50_ms；实际为 {self.p95_ms!r}"
             )
         _require_text("model_version", self.model_version)
 
@@ -250,12 +250,12 @@ class WorkerSnapshot:
     def __post_init__(self) -> None:
         _require_text("worker.gpu_id", self.gpu_id)
         if self.device.gpu_id != self.gpu_id:
-            raise ValidationError("worker.gpu_id must match worker.device.gpu_id")
+            raise ValidationError("worker.gpu_id 必须与 worker.device.gpu_id 一致")
         if (self.current_request_id is None) != (
             self.running_predicted_finish_ms is None
         ):
             raise ValidationError(
-                "current_request_id and running_predicted_finish_ms must be set together"
+                "current_request_id 与 running_predicted_finish_ms 必须同时设置"
             )
         if self.current_request_id is not None:
             _require_text("current_request_id", self.current_request_id)
@@ -287,7 +287,7 @@ class CostEstimate:
         _require_positive("predicted_render_p50_ms", self.predicted_render_p50_ms)
         _require_positive("predicted_render_p95_ms", self.predicted_render_p95_ms)
         if self.predicted_render_p95_ms < self.predicted_render_p50_ms:
-            raise ValidationError("predicted_render_p95_ms must be >= predicted_render_p50_ms")
+            raise ValidationError("predicted_render_p95_ms 必须大于或等于 predicted_render_p50_ms")
         expected = (
             self.running_remaining_ms
             + self.queued_work_ms
@@ -297,7 +297,7 @@ class CostEstimate:
         )
         if not math.isclose(self.total_ms, expected, rel_tol=1e-9, abs_tol=1e-9):
             raise ValidationError(
-                f"total_ms must equal the EFT component sum; expected {expected!r}"
+                f"total_ms 必须等于 EFT 各分量之和；期望 {expected!r}"
             )
 
 
@@ -316,7 +316,7 @@ class ScheduleDecision:
         _require_text("decision.reason", self.reason)
         copied = dict(self.costs)
         if self.gpu_id not in copied:
-            raise ValidationError("decision.costs must contain the selected gpu_id")
+            raise ValidationError("decision.costs 必须包含选中的 gpu_id")
         object.__setattr__(self, "costs", MappingProxyType(copied))
 
 
@@ -336,7 +336,7 @@ class RenderResult:
         _require_non_negative("result.start_ms", self.start_ms)
         _require_non_negative("result.finish_ms", self.finish_ms)
         if self.finish_ms < self.start_ms:
-            raise ValidationError("result.finish_ms must be >= result.start_ms")
+            raise ValidationError("result.finish_ms 必须大于或等于 result.start_ms")
         _require_positive("result.render_ms", self.render_ms)
         _require_non_negative("result.readback_ms", self.readback_ms)
         _require_non_negative("result.encode_ms", self.encode_ms)
@@ -360,16 +360,16 @@ class TraceRecord:
         )
         if set(renders) != set(readbacks):
             raise ValidationError(
-                "actual render and readback mappings must contain identical GPU IDs"
+                "实际渲染与回读映射必须包含完全相同的 GPU ID"
             )
         if any(value <= 0 for value in renders.values()):
-            raise ValidationError("actual render durations must be positive")
+            raise ValidationError("实际渲染耗时必须为正数")
         _require_non_negative("actual_encode_ms", self.actual_encode_ms)
         if self.isolated_p50_ms is not None:
             _require_positive("isolated_p50_ms", self.isolated_p50_ms)
         if self.source not in {"synthetic", "measured"}:
             raise ValidationError(
-                f"source must be 'synthetic' or 'measured'; got {self.source!r}"
+                f"source 必须是 'synthetic' 或 'measured'；实际为 {self.source!r}"
             )
         object.__setattr__(self, "actual_render_ms_by_gpu", renders)
         object.__setattr__(self, "actual_readback_ms_by_gpu", readbacks)

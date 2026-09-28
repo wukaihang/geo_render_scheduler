@@ -1,4 +1,4 @@
-"""Lossless CSV persistence and canonical hashing for immutable traces."""
+"""不可变轨迹的无损 CSV 持久化与规范哈希。"""
 
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ def write_trace_csv(path: Path, trace: Iterable[TraceRecord]) -> Path:
     path = Path(path)
     records = tuple(trace)
     if not records:
-        raise ValidationError("trace must not be empty")
+        raise ValidationError("轨迹不得为空")
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=TRACE_FIELDS)
@@ -101,7 +101,7 @@ def read_trace_csv(path: Path) -> Tuple[TraceRecord, ...]:
     with Path(path).open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         if tuple(reader.fieldnames or ()) != TRACE_FIELDS:
-            raise ValidationError("trace CSV columns do not match the versioned schema")
+            raise ValidationError("轨迹 CSV 列与版本化模式不匹配")
         for row in reader:
             request = RenderRequest(
                 request_id=row["request_id"],
@@ -144,13 +144,13 @@ def read_trace_csv(path: Path) -> Tuple[TraceRecord, ...]:
                 )
             )
     if not records:
-        raise ValidationError("trace CSV must contain at least one record")
+        raise ValidationError("轨迹 CSV 至少必须包含一条记录")
     return tuple(records)
 
 
 def trace_sha256(trace: Iterable[TraceRecord]) -> str:
     rows = [_row(record) for record in trace]
     if not rows:
-        raise ValidationError("trace must not be empty")
+        raise ValidationError("轨迹不得为空")
     canonical = json.dumps(rows, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

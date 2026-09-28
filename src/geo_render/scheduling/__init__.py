@@ -1,4 +1,4 @@
-"""Request-level multi-GPU scheduling for innovation one."""
+"""创新点一的请求级多 GPU 调度。"""
 
 from .interface import SchedulerContext, SchedulerPolicy
 from .policies import (
